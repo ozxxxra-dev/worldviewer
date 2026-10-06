@@ -1,6 +1,7 @@
 // ニュース見出しに「日本語訳」と「金相場との関連度」を付ける。
-// ANTHROPIC_API_KEY があれば Claude で翻訳・採点し、無ければキーワードで関連度だけ推定する。
-// 前回のスナップショットの結果をリンク単位で再利用するので、Claude に送るのは新しい見出しだけ。
+//   関連度: ANTHROPIC_API_KEY があれば Claude、無ければキーワードで推定
+//   翻訳:   Claude → Microsoft Translator（無料枠 F0, AZURE_TRANSLATOR_KEY）→ 訳なし の順
+// 前回のスナップショットの結果をリンク単位で再利用するので、外部に送るのは新しい見出しだけ。
 import Anthropic from '@anthropic-ai/sdk';
 
 export const DEFAULT_MODEL = 'claude-opus-5-5';
@@ -60,12 +61,13 @@ export function keywordScore(text) {
 
 async function askClaude(client, model, batch) {
   const lines = batch.map((n, i) => ({ id: i, lang: n.lang, title: n.title, summary: (n.summary ?? '').slice(0, 200) }));
+  // Haiku 4.5 は effort と fallbacks を受け付けない
+  const haiku = /haiku/.test(model);
   const res = await client.beta.messages.create({
     model,
     max_tokens: 16000,
-    betas: ['server-side-fallback-2026-07-01'],
-    fallbacks: 'default',
-    output_config: { effort: 'low', format: { type: 'json_schema', schema: SCHEMA } },
+    ...(haiku ? {} : { betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default' }),
+    output_config: { ...(haiku ? {} : { effort: 'low' }), format: { type: 'json_schema', schema: SCHEMA } },
     system: SYSTEM,
     messages: [{ role: 'user', content: `次の${batch.length}件を処理してください。\n${JSON.stringify(lines)}` }],
   });
@@ -80,11 +82,37 @@ async function askClaude(client, model, batch) {
   return { out, usage: res.usage };
 }
 
+/* ---------- Microsoft Translator（無料枠 F0: 月200万文字。超えると止まるだけで課金されない） ---------- */
+
+const MS_ENDPOINT = 'https://api.cognitive.microsofttranslator.com/translate?api-version=3.0&to=ja';
+
+export async function translateMicrosoft(texts, { key, region, fetchImpl = fetch }) {
+  const out = [];
+  for (let i = 0; i < texts.length; i += 100) {
+    const chunk = texts.slice(i, i + 100);
+    const res = await fetchImpl(MS_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Ocp-Apim-Subscription-Key': key,
+        ...(region ? { 'Ocp-Apim-Subscription-Region': region } : {}),
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(chunk.map((Text) => ({ Text }))),
+      signal: AbortSignal.timeout(30_000),
+    });
+    if (!res.ok) throw new Error(`Microsoft Translator HTTP ${res.status}`);
+    const j = await res.json();
+    out.push(...j.map((r) => r.translations?.[0]?.text ?? null));
+  }
+  return out;
+}
+
 /**
- * items に .ai = { ja?, score, dir?, why?, by } を付ける（その場で書き換える）。
- * prev: Map<link, ai>（前回分）。client が null ならキーワード判定のみ。
+ * items に .ai = { ja?, jaBy?, score, dir?, why?, by } を付ける（その場で書き換える）。
+ * prev: Map<link, ai>（前回分）。client が null なら関連度はキーワード判定。
+ * ms: { key, region } があれば、Claude で訳していない見出しを Microsoft Translator で訳す。
  */
-export async function enrichNews(items, { prev = new Map(), client = null, model = DEFAULT_MODEL, maxNew = 200 } = {}) {
+export async function enrichNews(items, { prev = new Map(), client = null, model = DEFAULT_MODEL, maxNew = 200, ms = null, fetchImpl = fetch } = {}) {
   const byLink = new Map();
   for (const n of items) if (!byLink.has(n.link)) byLink.set(n.link, n);
   const unique = [...byLink.values()];
@@ -115,9 +143,33 @@ export async function enrichNews(items, { prev = new Map(), client = null, model
 
   // AI の結果が無いものはキーワードで関連度だけ付ける
   for (const n of items) {
-    n.ai = result.get(n.link) ?? { score: keywordScore(`${n.title} ${n.summary ?? ''}`), by: 'kw' };
+    n.ai = { ...(result.get(n.link) ?? { score: keywordScore(`${n.title} ${n.summary ?? ''}`), by: 'kw' }) };
+    if (n.ai.ja && !n.ai.jaBy) n.ai.jaBy = n.ai.by;
     // 日本語記事に訳は不要
-    if (n.lang === 'ja' && n.ai.ja) n.ai = { ...n.ai, ja: undefined };
+    if (n.lang === 'ja') {
+      delete n.ai.ja;
+      delete n.ai.jaBy;
+    }
+  }
+
+  // 訳の無い外国語の見出し: 前回の訳を再利用し、残りを Microsoft Translator で訳す
+  const untranslated = items.filter((n) => n.lang !== 'ja' && !n.ai.ja);
+  for (const n of untranslated) {
+    const p = prev.get(n.link);
+    if (p?.ja) Object.assign(n.ai, { ja: p.ja, jaBy: p.jaBy ?? p.by });
+  }
+  stats.translator = ms?.key ? 'microsoft' : null;
+  stats.msChars = 0;
+  if (ms?.key) {
+    const todo = [...new Map(untranslated.filter((n) => !n.ai.ja).map((n) => [n.link, n])).values()].slice(0, maxNew);
+    try {
+      const ja = await translateMicrosoft(todo.map((n) => n.title), { ...ms, fetchImpl });
+      const byLinkJa = new Map(todo.map((n, i) => [n.link, ja[i]]));
+      for (const n of untranslated) if (byLinkJa.get(n.link)) Object.assign(n.ai, { ja: byLinkJa.get(n.link), jaBy: 'ms' });
+      stats.msChars = todo.reduce((a, n) => a + n.title.length, 0);
+    } catch (e) {
+      stats.errors.push(String(e?.message ?? e).slice(0, 200));
+    }
   }
   return stats;
 }

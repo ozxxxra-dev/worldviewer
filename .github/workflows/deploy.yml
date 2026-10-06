@@ -35,6 +35,9 @@ jobs:
           # 設定されていれば見出しの翻訳と金関連度の判定に Claude を使う（無ければキーワード判定のみ）
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           CLAUDE_MODEL: ${{ vars.CLAUDE_MODEL }}
+          # Claude を使わない場合の無料翻訳（Microsoft Translator の無料枠 F0）
+          AZURE_TRANSLATOR_KEY: ${{ secrets.AZURE_TRANSLATOR_KEY }}
+          AZURE_TRANSLATOR_REGION: ${{ vars.AZURE_TRANSLATOR_REGION }}
           # 前回公開分の翻訳を再利用して、新しい見出しだけを Claude に送る
           PREV_SNAPSHOT_URL: ${{ steps.pages.outputs.base_url }}/data/snapshot.json
       - name: Update gold price history

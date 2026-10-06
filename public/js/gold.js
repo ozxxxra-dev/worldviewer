@@ -1,6 +1,6 @@
 /* global d3 */
 import { $, h, ago, fmtDate, cssVar } from './util.js';
-import { newsItem, applyPrefs, prefControls, relLegend } from './news.js';
+import { newsItem, applyPrefs, prefControls, relLegend, queueBrowserTranslation } from './news.js';
 
 const OZ_G = 31.1034768;
 
@@ -418,14 +418,10 @@ function renderGoldNews() {
     return;
   }
   const srcName = (id) => state.snap.sources.find((s) => s.id === id)?.name ?? id;
-  const esc = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  queueBrowserTranslation(list.slice(0, 40));
   $('gold-news').replaceChildren(
     ...list.slice(0, 40).map((n) =>
-      newsItem(n, {
-        // Google ニュースの見出し末尾「 - 媒体名」は媒体欄に移す
-        title: n.publisher ? n.title.replace(new RegExp(`\\s+-\\s+${esc(n.publisher)}$`), '') : n.title,
-        source: n.publisher ?? srcName(n.source),
-      }),
+      newsItem(n, { source: n.publisher ?? srcName(n.source) }),
     ),
   );
 }

@@ -1,7 +1,7 @@
 /* global d3, topojson */
 import { $, h, ago, fmtDate, cssVar } from './util.js';
 import { initGold, updateGold } from './gold.js';
-import { newsItem, applyPrefs, prefControls, relLegend } from './news.js';
+import { newsItem, applyPrefs, prefControls, relLegend, initBrowserTranslate, queueBrowserTranslation } from './news.js';
 
 const REFRESH_MS = 15 * 60 * 1000;
 const NEWS_RENDER_LIMIT = 150;
@@ -262,8 +262,10 @@ function renderNews() {
     $('news').replaceChildren(h('li', { class: 'empty' }, '該当するニュースはありません'));
     return;
   }
+  const shown = items.slice(0, NEWS_RENDER_LIMIT);
+  queueBrowserTranslation(shown);
   $('news').replaceChildren(
-    ...items.slice(0, NEWS_RENDER_LIMIT).map((n) =>
+    ...shown.map((n) =>
       newsItem(n, {
         source: sourceName(n.source),
         meta: n.countries.map((id) =>
@@ -406,6 +408,7 @@ async function main() {
   });
   $('clear-country').onclick = () => selectCountry(state.country);
   addEventListener('newsprefs', renderNews);
+  initBrowserTranslate();
   renderAll();
 
   // 開きっぱなしでも新しいスナップショットに追従する

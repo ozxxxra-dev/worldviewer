@@ -15,7 +15,7 @@
 ### ニュースの翻訳と金関連度
 - 海外ニュースの見出しを日本語に翻訳（「原文も表示」で英語の見出しと要約も確認可能）
 - 各ニュースに金相場との関連度（高・中・低）と、金価格にとって上昇要因か下落要因かの推定、その理由を表示。関連度で色分け・絞り込み・並び替えができます
-- 翻訳と判定は GitHub Actions 内で Claude API が行います（下記「Claude API の設定」）。API キーが無い場合は翻訳なしで、関連度だけキーワードで簡易判定します
+- 翻訳の方法は3通り（下記「翻訳の設定」）。どれも設定しなければ英語のまま表示し、関連度はキーワードで簡易判定します
 
 ### 世界情勢
 
@@ -46,13 +46,26 @@ GitHub Actions（毎時）
 2. `main` に push するか、Actions タブから「Update data & deploy」を手動実行
 3. 以後は毎時自動で更新されます（リポジトリに60日間 push がないと GitHub が定期実行を停止するので、その場合は Actions タブから再有効化してください）
 
-## Claude API の設定（翻訳・関連度判定）
+## 翻訳の設定
 
+| 方法 | 費用 | 設定 | 関連度の判定 |
+| --- | --- | --- | --- |
+| ブラウザ内蔵の翻訳（Chrome） | 無料 | 不要。Chrome（パソコン版）で開くと「ブラウザ内で翻訳する」ボタンが出る | キーワード |
+| Microsoft Translator | 無料（月200万文字まで。超えると止まるだけで課金なし） | 下記 | キーワード |
+| Claude API | 従量課金 | 下記 | AI（理由・上昇/下落要因つき） |
+
+複数設定した場合は Claude → Microsoft Translator → ブラウザ の順に使います。どの方法でも、前回公開した訳はリンク単位で再利用し、新しく出た見出しだけを翻訳します。
+
+### Microsoft Translator（無料枠）
+1. [Azure](https://azure.microsoft.com/) のアカウントを作成し、「Translator」リソースを価格レベル **F0（Free）** で作成
+2. リソースの「キーとエンドポイント」からキーと場所（例: `japaneast`）を確認
+3. リポジトリの **Settings → Secrets and variables → Actions** で、Secret に `AZURE_TRANSLATOR_KEY`、Variable に `AZURE_TRANSLATOR_REGION` を登録
+
+### Claude API
 1. [Claude Console](https://console.anthropic.com/) で API キーを発行
-2. リポジトリの **Settings → Secrets and variables → Actions → New repository secret** で `ANTHROPIC_API_KEY` を登録
+2. Secret に `ANTHROPIC_API_KEY` を登録
 
-前回公開した翻訳結果はリンク単位で再利用し、Claude には新しく出た見出しだけを送ります（1回あたり最大200件）。
-モデルは既定で `claude-opus-5-5`。費用を抑えたい場合は **Variables** に `CLAUDE_MODEL`（例: `claude-haiku-4-5`）を登録すると切り替えられます。
+モデルは既定で `claude-opus-5-5`。費用を抑えたい場合は Variable に `CLAUDE_MODEL`（例: `claude-haiku-4-5`）を登録すると切り替えられます。1回あたり最大200件まで送ります。
 
 ## ローカルで動かす
 

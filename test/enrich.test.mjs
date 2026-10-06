@@ -70,3 +70,40 @@ test('API キーが無いときはキーワード判定のみ・前回の AI 結
   assert.equal(items[0].ai.by, 'kw');
   assert.equal(items[1].ai.ja, '今日の天気');
 });
+
+test('Microsoft Translator: 訳の無い外国語見出しだけを送り、前回の訳は再利用', async () => {
+  const sent = [];
+  const fetchImpl = async (url, init) => {
+    assert.match(url, /api\.cognitive\.microsofttranslator\.com\/translate\?api-version=3\.0&to=ja/);
+    assert.equal(init.headers['Ocp-Apim-Subscription-Key'], 'k');
+    assert.equal(init.headers['Ocp-Apim-Subscription-Region'], 'japaneast');
+    const body = JSON.parse(init.body);
+    sent.push(...body.map((b) => b.Text));
+    return { ok: true, json: async () => body.map((b) => ({ translations: [{ text: `訳:${b.Text}`, to: 'ja' }] })) };
+  };
+  const items = [item('a', 'Gold rises'), item('b', 'Old one'), item('c', '日本語', 'ja'), item('a', 'Gold rises')];
+  const prev = new Map([['b', { score: 0, by: 'kw', ja: '前回の訳', jaBy: 'ms' }]]);
+  const stats = await enrichNews(items, { prev, ms: { key: 'k', region: 'japaneast' }, fetchImpl });
+  assert.deepEqual(sent, ['Gold rises']);
+  assert.deepEqual([items[0].ai.ja, items[0].ai.jaBy, items[0].ai.score, items[0].ai.by], ['訳:Gold rises', 'ms', 3, 'kw']);
+  assert.equal(items[3].ai.ja, '訳:Gold rises');
+  assert.equal(items[1].ai.ja, '前回の訳');
+  assert.equal(items[2].ai.ja, undefined);
+  assert.equal(stats.msChars, 'Gold rises'.length);
+});
+
+test('Microsoft Translator の失敗は記録して訳なしで続行', async () => {
+  const items = [item('a', 'Gold rises')];
+  const stats = await enrichNews(items, { ms: { key: 'k' }, fetchImpl: async () => ({ ok: false, status: 403 }) });
+  assert.equal(items[0].ai.ja, undefined);
+  assert.match(stats.errors[0], /403/);
+});
+
+test('Haiku には effort と fallbacks を送らない', async () => {
+  const calls = [];
+  const client = fakeClient(() => ({ stop_reason: 'end_turn', usage: {}, content: [{ type: 'text', text: '{"items":[]}' }] }), calls);
+  await enrichNews([item('a', 'x')], { client, model: 'claude-haiku-4-5' });
+  assert.equal(calls[0].fallbacks, undefined);
+  assert.equal(calls[0].output_config.effort, undefined);
+  assert.equal(calls[0].output_config.format.type, 'json_schema');
+});
