@@ -19,6 +19,11 @@
   --up: #15803d;
   --down: #b91c1c;
   --fx: #64748b;
+  --rel3: #a16207;
+  --rel2: #d4a24a;
+  --rel1: #ead7ae;
+  --rel-ink: #ffffff;
+  --rel2-ink: #3b2a06;
   --shadow: 0 1px 2px rgb(0 0 0 / .06), 0 2px 8px rgb(0 0 0 / .04);
   color-scheme: light;
 }
@@ -27,14 +32,14 @@
     --bg: #0d1117; --card: #161b22; --ink: #e6edf3; --muted: #8b98a8; --line: #262d36;
     --accent: #60a5fa; --land: #222a35; --land-stroke: #0d1117; --ocean: #10161e;
     --quake: #fb7185; --red: #f87171; --orange: #fb923c; --green: #4ade80;
-    --heat-0: #1e3a5f; --heat-1: #60a5fa; --shadow: none; color-scheme: dark; --gold: #e3b341; --gold-soft: #2a2412; --up: #4ade80; --down: #f87171; --fx: #94a3b8;
+    --heat-0: #1e3a5f; --heat-1: #60a5fa; --shadow: none; color-scheme: dark; --gold: #e3b341; --gold-soft: #2a2412; --up: #4ade80; --down: #f87171; --fx: #94a3b8; --rel3: #e3b341; --rel2: #a37b2c; --rel1: #4a3d22; --rel-ink: #1a1405; --rel2-ink: #fdf3dc;
   }
 }
 :root[data-theme="dark"] {
   --bg: #0d1117; --card: #161b22; --ink: #e6edf3; --muted: #8b98a8; --line: #262d36;
   --accent: #60a5fa; --land: #222a35; --land-stroke: #0d1117; --ocean: #10161e;
   --quake: #fb7185; --red: #f87171; --orange: #fb923c; --green: #4ade80;
-  --heat-0: #1e3a5f; --heat-1: #60a5fa; --shadow: none; color-scheme: dark; --gold: #e3b341; --gold-soft: #2a2412; --up: #4ade80; --down: #f87171; --fx: #94a3b8;
+  --heat-0: #1e3a5f; --heat-1: #60a5fa; --shadow: none; color-scheme: dark; --gold: #e3b341; --gold-soft: #2a2412; --up: #4ade80; --down: #f87171; --fx: #94a3b8; --rel3: #e3b341; --rel2: #a37b2c; --rel1: #4a3d22; --rel-ink: #1a1405; --rel2-ink: #fdf3dc;
 }
 
 * { box-sizing: border-box; }
@@ -256,3 +261,25 @@ h3 { margin: 0; font-size: 15px; }
 .range52-track span { position: absolute; top: 50%; width: 14px; height: 14px; border-radius: 50%; background: var(--gold); border: 2px solid var(--card); transform: translate(-50%, -50%); box-shadow: 0 0 0 1px var(--gold); }
 .range52-ends { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-top: 6px; font-variant-numeric: tabular-nums; }
 @media (max-width: 680px) { .cur tbody th small { display: none; } }
+
+/* ---------- ニュースの金関連度・翻訳 ---------- */
+.news li.ni { border-left: 3px solid transparent; padding-left: 10px; }
+.news li.ni.s3 { border-left-color: var(--rel3); background: color-mix(in srgb, var(--rel3) 7%, transparent); }
+.news li.ni.s2 { border-left-color: var(--rel2); }
+.news li.ni.s1 { border-left-color: var(--rel1); }
+.news .orig { color: var(--muted); font-size: 12px; margin-top: 2px; }
+.news .why { font-size: 12px; margin-top: 3px; color: var(--ink); }
+.news .why::before { content: "→ "; color: var(--muted); }
+.relbadge { display: inline-flex; gap: 6px; align-items: center; border-radius: 4px; padding: 0 6px; font-size: 11px; font-weight: 700; line-height: 18px; white-space: nowrap; }
+.relbadge.s3 { background: var(--rel3); color: var(--rel-ink); }
+.relbadge.s2 { background: var(--rel2); color: var(--rel2-ink); }
+.relbadge.s1 { background: transparent; color: var(--muted); box-shadow: inset 0 0 0 1px var(--rel1); font-weight: 600; }
+.relbadge .dir { font-weight: 600; }
+.mt { font-size: 10px; border: 1px solid var(--line); border-radius: 3px; padding: 0 3px; }
+.prefs { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; }
+.pref { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.pref-label, .pref-check { font-size: 12px; color: var(--muted); }
+.pref-label { margin-right: 2px; }
+.pref-check { display: inline-flex; gap: 4px; align-items: center; cursor: pointer; }
+.rel-legend { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 11px; color: var(--muted); margin-top: 6px; }
+#gold-news-prefs { padding-top: 0; }

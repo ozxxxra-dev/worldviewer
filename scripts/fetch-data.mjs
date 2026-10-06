@@ -1,9 +1,15 @@
 // 各データ源を取得して public/data/snapshot.json を書き出す。
 //   node scripts/fetch-data.mjs                 … 実際のサイトから取得
 //   node scripts/fetch-data.mjs --fixtures DIR  … DIR 内のサンプルファイルを使う（オフライン確認用）
-import { readFileSync, writeFileSync } from 'node:fs';
+//
+// 環境変数
+//   ANTHROPIC_API_KEY    … あれば Claude で見出しを翻訳し、金相場との関連度を判定する
+//   CLAUDE_MODEL         … 使うモデル（既定: claude-opus-5-5）
+//   PREV_SNAPSHOT_URL    … 前回公開したスナップショット。翻訳済みの見出しを再利用して API 呼び出しを減らす
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { buildSnapshot } from './lib/snapshot.mjs';
+import { enrichNews, prevMap, makeClient, DEFAULT_MODEL } from './lib/enrich.mjs';
 
 const args = process.argv.slice(2);
 const fixtureDir = args.includes('--fixtures') ? args[args.indexOf('--fixtures') + 1] : null;
@@ -31,9 +37,32 @@ const snapshot = await buildSnapshot({
 });
 if (fixtureDir) snapshot.sample = true;
 
+async function loadPrev() {
+  try {
+    if (fixtureDir) {
+      const f = join(fixtureDir, 'prev-snapshot.json');
+      return existsSync(f) ? JSON.parse(readFileSync(f, 'utf8')) : null;
+    }
+    if (!process.env.PREV_SNAPSHOT_URL) return null;
+    const res = await fetch(process.env.PREV_SNAPSHOT_URL, { signal: AbortSignal.timeout(20_000) });
+    return res.ok ? await res.json() : null;
+  } catch {
+    return null; // 初回公開時など。全件を新規に処理する
+  }
+}
+
+snapshot.enrichment = await enrichNews([...snapshot.news, ...snapshot.goldNews], {
+  prev: prevMap(await loadPrev()),
+  client: fixtureDir ? null : makeClient(),
+  model: process.env.CLAUDE_MODEL || DEFAULT_MODEL,
+});
+
 writeFileSync(outPath, JSON.stringify(snapshot));
 for (const s of snapshot.status) console.log(`${s.ok ? 'ok  ' : 'FAIL'} ${s.name}${s.ok ? ` (${s.count ?? '-'})` : `: ${s.error}`}`);
 console.log(`news=${snapshot.news.length} quakes=${snapshot.quakes.length} disasters=${snapshot.disasters.length}`);
+const en = snapshot.enrichment;
+console.log(`enrich: mode=${en.mode} reused=${en.reused} added=${en.added} tokens(in/out)=${en.inputTokens}/${en.outputTokens}`);
+for (const e of en.errors) console.warn(`  enrich error: ${e}`);
 
 // すべて失敗した場合はデプロイを止める（古い成功版を壊さないため）
 if (snapshot.status.every((s) => !s.ok)) process.exit(1);

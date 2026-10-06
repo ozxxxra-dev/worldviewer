@@ -1,0 +1,131 @@
+{
+ "news": [
+  {
+   "link": "https://example.com/bbc/1",
+   "ai": {
+    "ja": "[サンプル] ニジェールとナイジェリアが国境協議",
+    "score": 1,
+    "dir": "none",
+    "why": "",
+    "by": "ai"
+   }
+  },
+  {
+   "link": "https://example.com/bbc/2",
+   "ai": {
+    "ja": "[サンプル] ガザ停戦協議がカイロで再開",
+    "score": 2,
+    "dir": "down",
+    "why": "停戦進展ならリスク回避が後退",
+    "by": "ai"
+   }
+  },
+  {
+   "link": "https://example.com/bbc/gold",
+   "ai": {
+    "ja": "[サンプル] 中央銀行による金購入が過去最高に",
+    "score": 3,
+    "dir": "up",
+    "why": "公的需要の増加は価格を支える",
+    "by": "ai"
+   }
+  },
+  {
+   "link": "https://example.com/aj/1",
+   "ai": {
+    "ja": "[サンプル] インドとパキスタンが声明を応酬",
+    "score": 2,
+    "dir": "up",
+    "why": "核保有国間の緊張はリスク回避要因",
+    "by": "ai"
+   }
+  },
+  {
+   "link": "https://example.com/aj/2",
+   "ai": {
+    "ja": "[サンプル] イラン核協議がウィーンで開催",
+    "score": 2,
+    "dir": "mixed",
+    "why": "中東情勢と原油を通じて影響",
+    "by": "ai"
+   }
+  },
+  {
+   "link": "https://example.com/dw/1",
+   "ai": {
+    "ja": "[サンプル] ドイツ総選挙、選挙戦が最終週に",
+    "score": 1,
+    "dir": "none",
+    "why": "",
+    "by": "ai"
+   }
+  },
+  {
+   "link": "https://example.com/dw/2",
+   "ai": {
+    "ja": "[サンプル] ブラジルとアルゼンチンが貿易協定に署名",
+    "score": 0,
+    "dir": "none",
+    "why": "",
+    "by": "ai"
+   }
+  },
+  {
+   "link": "https://example.com/un/1",
+   "ai": {
+    "ja": "[サンプル] スーダンとチャドへの人道支援を要請",
+    "score": 0,
+    "dir": "none",
+    "why": "",
+    "by": "ai"
+   }
+  },
+  {
+   "link": "https://example.com/un/2",
+   "ai": {
+    "ja": "[サンプル] バングラデシュのミャンマー難民",
+    "score": 0,
+    "dir": "none",
+    "why": "",
+    "by": "ai"
+   }
+  },
+  {
+   "link": "https://example.com/gn/en1",
+   "ai": {
+    "ja": "[サンプル] FRBの見通しをにらみ金は落ち着いた動き",
+    "score": 3,
+    "dir": "mixed",
+    "why": "利下げ観測が金価格を左右",
+    "by": "ai"
+   }
+  },
+  {
+   "link": "https://example.com/nhk/2",
+   "ai": {
+    "score": 2,
+    "dir": "up",
+    "why": "米中摩擦は安全資産需要に",
+    "by": "ai"
+   }
+  },
+  {
+   "link": "https://example.com/gn/ja1",
+   "ai": {
+    "score": 3,
+    "dir": "up",
+    "why": "金価格そのものの動き",
+    "by": "ai"
+   }
+  },
+  {
+   "link": "https://example.com/gn/ja2",
+   "ai": {
+    "score": 3,
+    "dir": "down",
+    "why": "国内価格の下落",
+    "by": "ai"
+   }
+  }
+ ]
+}

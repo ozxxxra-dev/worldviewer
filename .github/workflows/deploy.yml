@@ -28,7 +28,15 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
+      - id: pages
+        uses: actions/configure-pages@v5
       - run: npm run fetch
+        env:
+          # 設定されていれば見出しの翻訳と金関連度の判定に Claude を使う（無ければキーワード判定のみ）
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_MODEL: ${{ vars.CLAUDE_MODEL }}
+          # 前回公開分の翻訳を再利用して、新しい見出しだけを Claude に送る
+          PREV_SNAPSHOT_URL: ${{ steps.pages.outputs.base_url }}/data/snapshot.json
       - name: Update gold price history
         run: node scripts/update-gold.mjs
       - name: Commit gold price history

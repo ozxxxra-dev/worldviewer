@@ -12,6 +12,11 @@
 
 金価格の日次データは [fawazahmed0/currency-api](https://github.com/fawazahmed0/exchange-api)（毎日 npm に公開）から取得し、`public/data/gold-history.json` に蓄積します。国際価格をドル円で換算した値なので、国内の店頭価格（手数料・消費税込み）とは異なります。
 
+### ニュースの翻訳と金関連度
+- 海外ニュースの見出しを日本語に翻訳（「原文も表示」で英語の見出しと要約も確認可能）
+- 各ニュースに金相場との関連度（高・中・低）と、金価格にとって上昇要因か下落要因かの推定、その理由を表示。関連度で色分け・絞り込み・並び替えができます
+- 翻訳と判定は GitHub Actions 内で Claude API が行います（下記「Claude API の設定」）。API キーが無い場合は翻訳なしで、関連度だけキーワードで簡易判定します
+
 ### 世界情勢
 
 - **世界地図**: 直近48時間のニュース見出しに登場した回数で国を色分け。地震（M4.5以上）と災害警報の位置も表示。国をクリックするとその国のニュースに絞り込み。
@@ -41,6 +46,14 @@ GitHub Actions（毎時）
 2. `main` に push するか、Actions タブから「Update data & deploy」を手動実行
 3. 以後は毎時自動で更新されます（リポジトリに60日間 push がないと GitHub が定期実行を停止するので、その場合は Actions タブから再有効化してください）
 
+## Claude API の設定（翻訳・関連度判定）
+
+1. [Claude Console](https://console.anthropic.com/) で API キーを発行
+2. リポジトリの **Settings → Secrets and variables → Actions → New repository secret** で `ANTHROPIC_API_KEY` を登録
+
+前回公開した翻訳結果はリンク単位で再利用し、Claude には新しく出た見出しだけを送ります（1回あたり最大200件）。
+モデルは既定で `claude-opus-5-5`。費用を抑えたい場合は **Variables** に `CLAUDE_MODEL`（例: `claude-haiku-4-5`）を登録すると切り替えられます。
+
 ## ローカルで動かす
 
 ```sh
@@ -56,6 +69,7 @@ npm test
 | やりたいこと | 編集する場所 |
 | --- | --- |
 | ニュースの配信元・金関連ニュースの検索語を変更 | `scripts/lib/sources.mjs` |
+| 金関連度の判定基準・翻訳の指示 | `scripts/lib/enrich.mjs` の `SYSTEM`（キーワード判定は `TIERS`） |
 | 国名の別名（「米国」「Kremlin」など）を追加 | `scripts/gen-countries.mjs` の `EXTRA` → `npm run gen:countries` |
 | 表示する通貨 | `scripts/lib/snapshot.mjs` の `FX_CODES` |
 | 世界時計の都市 | `public/js/app.js` の `CLOCKS` |

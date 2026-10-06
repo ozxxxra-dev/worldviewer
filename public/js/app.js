@@ -1,6 +1,7 @@
 /* global d3, topojson */
 import { $, h, ago, fmtDate, cssVar } from './util.js';
 import { initGold, updateGold } from './gold.js';
+import { newsItem, applyPrefs, prefControls, relLegend } from './news.js';
 
 const REFRESH_MS = 15 * 60 * 1000;
 const NEWS_RENDER_LIMIT = 150;
@@ -244,15 +245,18 @@ function renderSourceChips() {
 
 function renderNews() {
   const q = state.q.toLowerCase();
-  const items = state.snap.news.filter(
-    (n) =>
-      (!state.country || n.countries.includes(state.country)) &&
-      (state.sources.size === 0 || state.sources.has(n.source)) &&
-      (!q || `${n.title} ${n.summary}`.toLowerCase().includes(q)),
+  const items = applyPrefs(
+    state.snap.news.filter(
+      (n) =>
+        (!state.country || n.countries.includes(state.country)) &&
+        (state.sources.size === 0 || state.sources.has(n.source)) &&
+        (!q || `${n.title} ${n.summary} ${n.ai?.ja ?? ''}`.toLowerCase().includes(q)),
+    ),
   );
 
   $('news-title').textContent = state.country ? `${countryName(state.country)} のニュース（${items.length}件）` : `最新ニュース（${items.length}件）`;
   $('clear-country').hidden = !state.country;
+  $('news-prefs').replaceChildren(prefControls(), relLegend(state.snap.news));
 
   if (!items.length) {
     $('news').replaceChildren(h('li', { class: 'empty' }, '該当するニュースはありません'));
@@ -260,21 +264,12 @@ function renderNews() {
   }
   $('news').replaceChildren(
     ...items.slice(0, NEWS_RENDER_LIMIT).map((n) =>
-      h(
-        'li',
-        { lang: n.lang },
-        h('a', { href: n.link, target: '_blank', rel: 'noopener' }, n.title),
-        n.summary && n.summary !== n.title ? h('div', { class: 'sum' }, n.summary) : null,
-        h(
-          'div',
-          { class: 'row' },
-          h('span', {}, sourceName(n.source)),
-          n.date ? h('time', { datetime: n.date, title: fmtDate(n.date) }, ago(n.date)) : null,
-          ...n.countries.map((id) =>
-            h('button', { type: 'button', class: 'tag', lang: 'ja', onclick: () => selectCountry(id) }, countryName(id)),
-          ),
+      newsItem(n, {
+        source: sourceName(n.source),
+        meta: n.countries.map((id) =>
+          h('button', { type: 'button', class: 'tag', lang: 'ja', onclick: () => selectCountry(id) }, countryName(id)),
         ),
-      ),
+      }),
     ),
   );
 }
@@ -410,6 +405,7 @@ async function main() {
     renderNews();
   });
   $('clear-country').onclick = () => selectCountry(state.country);
+  addEventListener('newsprefs', renderNews);
   renderAll();
 
   // 開きっぱなしでも新しいスナップショットに追従する

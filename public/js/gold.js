@@ -1,5 +1,6 @@
 /* global d3 */
 import { $, h, ago, fmtDate, cssVar } from './util.js';
+import { newsItem, applyPrefs, prefControls, relLegend } from './news.js';
 
 const OZ_G = 31.1034768;
 
@@ -408,28 +409,24 @@ function renderCurrencies() {
 /* --- 金関連ニュース --- */
 
 function renderGoldNews() {
-  const list = state.snap?.goldNews ?? [];
+  const all = state.snap?.goldNews ?? [];
+  // 絞り込み・並び替え・原文表示の設定は世界情勢のニュース欄と共通
+  const list = applyPrefs(all);
+  $('gold-news-prefs').replaceChildren(prefControls(), relLegend(all));
   if (!list.length) {
-    $('gold-news').replaceChildren(h('li', { class: 'empty' }, '金関連のニュースはまだありません'));
+    $('gold-news').replaceChildren(h('li', { class: 'empty' }, all.length ? '条件に合うニュースはありません' : '金関連のニュースはまだありません'));
     return;
   }
   const srcName = (id) => state.snap.sources.find((s) => s.id === id)?.name ?? id;
+  const esc = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   $('gold-news').replaceChildren(
-    ...list.slice(0, 40).map((n) => {
-      // Google ニュースの見出し末尾「 - 媒体名」は媒体欄に移す
-      const title = n.publisher ? n.title.replace(new RegExp(`\\s+-\\s+${n.publisher.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`), '') : n.title;
-      return h(
-        'li',
-        { lang: n.lang },
-        h('a', { href: n.link, target: '_blank', rel: 'noopener' }, title),
-        h(
-          'div',
-          { class: 'row' },
-          h('span', {}, n.publisher ?? srcName(n.source)),
-          n.date ? h('time', { datetime: n.date, title: fmtDate(n.date) }, ago(n.date)) : null,
-        ),
-      );
-    }),
+    ...list.slice(0, 40).map((n) =>
+      newsItem(n, {
+        // Google ニュースの見出し末尾「 - 媒体名」は媒体欄に移す
+        title: n.publisher ? n.title.replace(new RegExp(`\\s+-\\s+${esc(n.publisher)}$`), '') : n.title,
+        source: n.publisher ?? srcName(n.source),
+      }),
+    ),
   );
 }
 
@@ -450,6 +447,7 @@ export function initGold(history, snap) {
   renderGold();
   let raf;
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', renderGold);
+  addEventListener('newsprefs', renderGoldNews);
   addEventListener('resize', () => {
     cancelAnimationFrame(raf);
     raf = requestAnimationFrame(renderChart);
