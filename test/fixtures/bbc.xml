@@ -3,4 +3,5 @@
 <item><title><![CDATA[[Sample] Niger and Nigeria hold border talks]]></title><link>https://example.com/bbc/1</link><pubDate>Tue, 06 Oct 2026 09:00:00 GMT</pubDate><description><![CDATA[<p>Sample summary &amp; text.</p>]]></description></item>
 <item><title>[Sample] Gaza ceasefire talks resume in Cairo</title><link>https://example.com/bbc/2</link><pubDate>Tue, 06 Oct 2026 07:00:00 GMT</pubDate><description>Israeli and Egyptian officials meet.</description></item>
 <item><title>[Sample] Duplicate link is dropped</title><link>https://example.com/nhk/1</link><pubDate>Tue, 06 Oct 2026 06:00:00 GMT</pubDate><description>dup</description></item>
+<item><title>[Sample] Central bank gold buying hits record</title><link>https://example.com/bbc/gold</link><pubDate>Tue, 06 Oct 2026 08:00:00 GMT</pubDate><description>Sample.</description></item>
 </channel></rss>

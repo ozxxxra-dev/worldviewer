@@ -1,6 +1,6 @@
 import { parseFeed } from './parse.mjs';
 import { makeTagger } from './tagger.mjs';
-import { NEWS_SOURCES, QUAKE_URL, GDACS_URL, FX_URL } from './sources.mjs';
+import { NEWS_SOURCES, GOLD_NEWS_SOURCES, GOLD_KEYWORDS, GOLD_SPOT_URL, QUAKE_URL, GDACS_URL, FX_URL } from './sources.mjs';
 
 const NEWS_MAX_AGE_H = 48;
 const NEWS_LIMIT = 400;
@@ -96,14 +96,53 @@ export async function buildSnapshot({ get, countries, now = new Date() }) {
     };
   });
 
+  // 金関連ニュース: 専用の検索フィードと、一般ニュースのうちキーワードに一致するもの
+  const goldLists = await Promise.all(
+    GOLD_NEWS_SOURCES.map((src) =>
+      settle(src.id, src.name, async () =>
+        parseFeed(await get('news', src)).map((it) => ({
+          title: it.title,
+          link: it.link,
+          date: it.date,
+          source: src.id,
+          // Google ニュースは見出し末尾が「 - 媒体名」
+          publisher: String(it.raw.source?.['#text'] ?? it.raw.source ?? '') || null,
+          lang: src.lang,
+        })),
+      ),
+    ),
+  );
+  const goldSeen = new Set();
+  const goldTitleKey = (t) => t.replace(/\s+-\s+[^-]+$/, '').toLowerCase();
+  const goldNews = [
+    ...goldLists.flat().filter(Boolean),
+    ...news.filter((n) => GOLD_KEYWORDS.test(n.title)).map(({ countries: _c, summary: _s, ...n }) => n),
+  ]
+    .filter((n) => !n.date || Date.parse(n.date) >= cutoff)
+    .filter((n) => {
+      const k = goldTitleKey(n.title);
+      return goldSeen.has(n.link) || goldSeen.has(k) ? false : (goldSeen.add(n.link), goldSeen.add(k));
+    })
+    .sort((a, b) => (b.date ?? '').localeCompare(a.date ?? ''))
+    .slice(0, 80);
+
+  const goldSpot = await settle('gold-spot', '金スポット価格', async () => {
+    const j = JSON.parse(await get('spot', { id: 'gold-spot', url: GOLD_SPOT_URL }));
+    const price = Number(j.price);
+    if (!(price > 0)) throw new Error('no price');
+    return { usd: price, updated: j.updatedAt ? new Date(j.updatedAt).toISOString() : now.toISOString() };
+  });
+
   return {
     generatedAt: now.toISOString(),
-    sources: [...NEWS_SOURCES.map((s) => ({ id: s.id, name: s.name, lang: s.lang }))],
+    sources: [...NEWS_SOURCES, ...GOLD_NEWS_SOURCES].map((s) => ({ id: s.id, name: s.name, lang: s.lang })),
     status,
     news,
     countryCounts,
     quakes,
     disasters,
     fx,
+    goldNews,
+    goldSpot,
   };
 }

@@ -20,7 +20,7 @@ async function getRemote(_kind, src) {
 }
 
 function getFixture(kind, src) {
-  const ext = kind === 'quakes' || kind === 'fx' ? 'json' : 'xml';
+  const ext = ['quakes', 'fx', 'spot'].includes(kind) ? 'json' : 'xml';
   return readFileSync(join(fixtureDir, `${src.id}.${ext}`), 'utf8');
 }
 

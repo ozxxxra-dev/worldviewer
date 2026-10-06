@@ -33,7 +33,7 @@ test('国タグ付け: 部分一致・単語境界の誤検出を避ける', () 
 
 test('スナップショット: 失敗源の記録・重複除去・期間外除外', async () => {
   const get = (kind, src) => {
-    const ext = kind === 'quakes' || kind === 'fx' ? 'json' : 'xml';
+    const ext = ['quakes', 'fx', 'spot'].includes(kind) ? 'json' : 'xml';
     return fx(`${src.id}.${ext}`);
   };
   const s = await buildSnapshot({ get, countries, now: new Date('2026-10-06T12:00:00Z') });
@@ -48,4 +48,15 @@ test('スナップショット: 失敗源の記録・重複除去・期間外除
   assert.equal(s.disasters[0].alert, 'red');
   assert.equal(s.quakes[0].mag, 6.1);
   assert.equal(s.fx.rates.JPY, 148.25);
+});
+
+test('金関連ニュース・スポット価格', async () => {
+  const get = (kind, src) => fx(`${src.id}.${['quakes', 'fx', 'spot'].includes(kind) ? 'json' : 'xml'}`);
+  const s = await buildSnapshot({ get, countries, now: new Date('2026-10-06T12:00:00Z') });
+  const titles = s.goldNews.map((n) => n.title);
+  assert.ok(titles.some((t) => t.includes('金価格、最高値圏')));
+  assert.ok(titles.includes('[Sample] Central bank gold buying hits record'), '一般ニュースからもキーワードで拾う');
+  assert.equal(titles.filter((t) => t.startsWith('[Sample] Gold steadies')).length, 1, '媒体違いの同一見出しは1件に');
+  assert.equal(s.goldNews.find((n) => n.link === 'https://example.com/gn/ja1').publisher, 'サンプル新聞');
+  assert.equal(s.goldSpot.usd, 4130.5);
 });

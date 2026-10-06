@@ -1,4 +1,7 @@
 /* global d3, topojson */
+import { $, h, ago, fmtDate, cssVar } from './util.js';
+import { initGold, updateGold } from './gold.js';
+
 const REFRESH_MS = 15 * 60 * 1000;
 const NEWS_RENDER_LIMIT = 150;
 
@@ -29,36 +32,8 @@ const state = {
   layers: { news: true, quakes: true, disasters: true },
 };
 
-const $ = (id) => document.getElementById(id);
-
-/** 小さな DOM ビルダー。文字列は textContent として入るので HTML エスケープ不要 */
-function h(tag, attrs = {}, ...children) {
-  const el = document.createElement(tag);
-  for (const [k, v] of Object.entries(attrs)) {
-    if (v == null || v === false) continue;
-    if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
-    else if (k === 'class') el.className = v;
-    else el.setAttribute(k, v === true ? '' : v);
-  }
-  for (const c of children.flat()) if (c != null && c !== false) el.append(c);
-  return el;
-}
-
-const rtf = new Intl.RelativeTimeFormat('ja', { numeric: 'auto' });
-function ago(iso) {
-  if (!iso) return '';
-  const s = (Date.parse(iso) - Date.now()) / 1000;
-  const abs = Math.abs(s);
-  if (abs < 3600) return rtf.format(Math.round(s / 60), 'minute');
-  if (abs < 86400) return rtf.format(Math.round(s / 3600), 'hour');
-  return rtf.format(Math.round(s / 86400), 'day');
-}
-const fmtDate = (iso) =>
-  new Date(iso).toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-
 const countryName = (id) => state.countries[id]?.ja ?? id;
 const sourceName = (id) => state.snap.sources.find((s) => s.id === id)?.name ?? id;
-const cssVar = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 
 /* ---------- ヘッダー ---------- */
 
@@ -409,17 +384,25 @@ async function loadSnapshot() {
   return res.json();
 }
 
+async function loadGoldHistory() {
+  const res = await fetch(`data/gold-history.json?t=${Date.now()}`);
+  if (!res.ok) throw new Error(`gold-history.json: HTTP ${res.status}`);
+  return res.json();
+}
+
 async function main() {
   renderClocks();
   setInterval(renderClocks, 30_000);
 
-  const [snap, countries, world] = await Promise.all([
+  const [snap, countries, world, gold] = await Promise.all([
     loadSnapshot(),
     fetch('data/countries.json').then((r) => r.json()),
     fetch('vendor/countries-110m.json').then((r) => r.json()),
+    loadGoldHistory(),
   ]);
   state.snap = snap;
   state.countries = countries;
+  initGold(gold, snap);
 
   initMap(world);
   $('q').addEventListener('input', (e) => {
@@ -436,6 +419,7 @@ async function main() {
       if (next.generatedAt !== state.snap.generatedAt) {
         state.snap = next;
         renderAll();
+        updateGold(await loadGoldHistory(), next);
       } else {
         renderMeta();
       }

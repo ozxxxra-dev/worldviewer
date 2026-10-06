@@ -8,7 +8,8 @@
     "fetch:sample": "node scripts/fetch-data.mjs --fixtures test/fixtures",
     "dev": "npm run build && npm run fetch:sample && node scripts/serve.mjs",
     "test": "node --test test/*.test.mjs",
-    "gen:countries": "node scripts/gen-countries.mjs"
+    "gen:countries": "node scripts/gen-countries.mjs",
+    "gold": "node scripts/update-gold.mjs"
   },
   "repository": {
     "type": "git",

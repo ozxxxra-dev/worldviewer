@@ -3,23 +3,68 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>World Viewer — 世界情勢ダッシュボード</title>
-  <meta name="description" content="世界のニュース・地震・災害警報・為替を地図で一望するダッシュボード">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌏</text></svg>">
+  <title>World Viewer — 金と世界情勢</title>
+  <meta name="description" content="金価格の値動きと、その背景にある世界情勢を一望するダッシュボード">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🪙</text></svg>">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
   <header class="top">
     <div class="brand">
       <h1>World Viewer</h1>
-      <span class="sub">世界情勢ダッシュボード</span>
+      <span class="sub">金と世界情勢</span>
     </div>
     <div class="meta" id="meta">読み込み中…</div>
     <div class="clocks" id="clocks" aria-label="世界時計"></div>
   </header>
 
   <div id="sample-banner" class="banner" hidden>
-    表示中のデータは<strong>オフライン確認用のサンプル</strong>です。実データは GitHub Actions が1時間ごとに取得します。
+    ニュース・地震・災害・為替・金スポット価格は<strong>オフライン確認用のサンプル</strong>です（金価格の推移グラフは実データ）。公開後は GitHub Actions が1時間ごとに実データを取得します。
+  </div>
+
+  <section class="gold" aria-labelledby="gold-h">
+    <div class="section-head">
+      <h2 id="gold-h">金相場</h2>
+      <div class="controls">
+        <div class="chips" id="gold-units" role="group" aria-label="単位"></div>
+        <div class="chips" id="gold-ranges" role="group" aria-label="期間"></div>
+      </div>
+    </div>
+    <div class="gold-grid">
+      <div class="card hero" id="gold-hero" aria-live="polite"></div>
+
+      <div class="card chart-card">
+        <div class="card-head"><h3>価格の推移 <small id="gold-chart-summary"></small></h3></div>
+        <div class="chart-wrap">
+          <svg id="gold-chart" role="img" aria-label="金価格の推移"></svg>
+          <div class="tooltip" id="gold-tip" hidden></div>
+        </div>
+      </div>
+
+      <div class="card factor-card">
+        <div class="card-head"><h3>円建て価格の変動要因</h3></div>
+        <div class="factors" id="gold-factors"></div>
+      </div>
+
+      <div class="card related-card">
+        <div class="card-head"><h3>関連指標</h3></div>
+        <div class="related" id="gold-related"></div>
+      </div>
+
+      <div class="card gnews-card">
+        <div class="card-head"><h3>金関連ニュース <small>直近48時間</small></h3></div>
+        <ol class="news" id="gold-news"></ol>
+      </div>
+
+      <div class="card cur-card">
+        <div class="card-head"><h3>各国通貨建ての金価格</h3></div>
+        <div class="table-scroll"><table class="cur" id="gold-currencies"></table></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-head world-head">
+    <h2>世界情勢 <small>金は「有事の金」と呼ばれ、紛争や金融不安で買われやすい資産です</small></h2>
   </div>
 
   <main class="grid">

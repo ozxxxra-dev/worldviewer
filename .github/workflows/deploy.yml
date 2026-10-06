@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write # 金価格の履歴ファイルをコミットするため
   pages: write
   id-token: write
 
@@ -29,6 +29,17 @@ jobs:
       - run: npm test
       - run: npm run build
       - run: npm run fetch
+      - name: Update gold price history
+        run: node scripts/update-gold.mjs
+      - name: Commit gold price history
+        if: github.ref == 'refs/heads/main'
+        run: |
+          if git diff --quiet -- public/data/gold-history.json; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898283+github-actions[bot]@users.noreply.github.com'
+          git add public/data/gold-history.json
+          git commit -m 'data: 金価格の履歴を更新'
+          git push
       - uses: actions/upload-pages-artifact@v3
         with:
           path: public
