@@ -2,7 +2,6 @@
 import { h, ago, fmtDate } from './util.js';
 
 const REL_LABEL = { 3: '高', 2: '中', 1: '低' };
-const DIR_LABEL = { up: '↑ 上昇要因', down: '↓ 下落要因', mixed: '↕ 両面' };
 
 /* ---------- 表示設定（両方のニュース欄で共有し、ブラウザに記憶） ---------- */
 
@@ -162,25 +161,19 @@ export function prefControls() {
 
 function relBadge(ai) {
   if (!ai || !REL_LABEL[ai.score]) return null;
-  const how = ai.by === 'ai' ? 'AIによる推定' : 'キーワードによる簡易判定';
-  return h(
-    'span',
-    { class: `relbadge s${ai.score}`, title: `金相場との関連度（${how}）${ai.why ? `：${ai.why}` : ''}` },
-    `金関連 ${REL_LABEL[ai.score]}`,
-    ai.score >= 2 && DIR_LABEL[ai.dir] ? h('span', { class: 'dir' }, DIR_LABEL[ai.dir]) : null,
-  );
+  return h('span', { class: `relbadge s${ai.score}`, title: '金相場との関連度（見出しのキーワードによる判定）' }, `金関連 ${REL_LABEL[ai.score]}`);
 }
 
 /**
  * ニュース1件の <li>。
  * opts.meta: 行末に足す要素, opts.source: 配信元名
  */
-const TRANSLATED_BY = { ai: 'AI（Claude）による翻訳', ms: 'Microsoft Translator による機械翻訳', kw: '機械翻訳', browser: 'ブラウザ内蔵の機械翻訳' };
+const TRANSLATED_BY = { ms: 'Microsoft Translator による機械翻訳', browser: 'ブラウザ内蔵の機械翻訳' };
 
 export function newsItem(n, { title = cleanTitle(n), source, meta = [], summary = n.summary } = {}) {
   const ai = n.ai;
   const ja = n.lang === 'ja' ? null : (ai?.ja ?? btCache.get(n.link) ?? null);
-  const jaBy = ai?.ja ? (ai.jaBy ?? ai.by) : 'browser';
+  const jaBy = ai?.ja ? ai.jaBy : 'browser';
   const translated = !!ja;
   return h(
     'li',
@@ -189,7 +182,6 @@ export function newsItem(n, { title = cleanTitle(n), source, meta = [], summary 
     translated && prefs.original ? h('div', { class: 'orig', lang: n.lang }, title) : null,
     // 英語の要約は訳していないので、訳がある見出しでは原文表示のときだけ出す
     summary && summary !== n.title && (!translated || prefs.original) ? h('div', { class: 'sum', lang: n.lang }, summary) : null,
-    ai?.why && ai.score >= 2 ? h('div', { class: 'why' }, ai.why) : null,
     h(
       'div',
       { class: 'row' },
@@ -203,12 +195,11 @@ export function newsItem(n, { title = cleanTitle(n), source, meta = [], summary 
 }
 
 /** 関連度の凡例 */
-export function relLegend(items) {
-  const how = items.some((n) => n.ai?.by === 'ai') ? 'AI推定' : 'キーワードによる簡易判定';
+export function relLegend() {
   return h(
     'div',
     { class: 'rel-legend' },
-    `金相場との関連度（${how}）:`,
+    '金相場との関連度（キーワード判定）:',
     ...[3, 2, 1].map((s) => h('span', { class: `relbadge s${s}` }, REL_LABEL[s])),
   );
 }

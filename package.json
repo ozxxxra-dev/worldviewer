@@ -20,7 +20,6 @@
   },
   "homepage": "https://github.com/ozxxxra-dev/worldviewer#readme",
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.131.0",
     "fast-xml-parser": "^5.11.2"
   },
   "devDependencies": {

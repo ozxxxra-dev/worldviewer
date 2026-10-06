@@ -3,14 +3,12 @@
 //   node scripts/fetch-data.mjs --fixtures DIR  … DIR 内のサンプルファイルを使う（オフライン確認用）
 //
 // 環境変数
-//   ANTHROPIC_API_KEY    … あれば Claude で見出しを翻訳し、金相場との関連度を判定する
-//   CLAUDE_MODEL         … 使うモデル（既定: claude-opus-5-5）
 //   AZURE_TRANSLATOR_KEY / AZURE_TRANSLATOR_REGION … Microsoft Translator（無料枠）で見出しを翻訳する
-//   PREV_SNAPSHOT_URL    … 前回公開したスナップショット。翻訳済みの見出しを再利用して API 呼び出しを減らす
+//   PREV_SNAPSHOT_URL    … 前回公開したスナップショット。翻訳済みの見出しを再利用して翻訳する文字数を減らす
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { buildSnapshot } from './lib/snapshot.mjs';
-import { enrichNews, prevMap, makeClient, DEFAULT_MODEL } from './lib/enrich.mjs';
+import { enrichNews, prevMap } from './lib/enrich.mjs';
 
 const args = process.argv.slice(2);
 const fixtureDir = args.includes('--fixtures') ? args[args.indexOf('--fixtures') + 1] : null;
@@ -54,8 +52,6 @@ async function loadPrev() {
 
 snapshot.enrichment = await enrichNews([...snapshot.news, ...snapshot.goldNews], {
   prev: prevMap(await loadPrev()),
-  client: fixtureDir ? null : makeClient(),
-  model: process.env.CLAUDE_MODEL || DEFAULT_MODEL,
   ms: !fixtureDir && process.env.AZURE_TRANSLATOR_KEY ? { key: process.env.AZURE_TRANSLATOR_KEY, region: process.env.AZURE_TRANSLATOR_REGION } : null,
 });
 
@@ -63,7 +59,7 @@ writeFileSync(outPath, JSON.stringify(snapshot));
 for (const s of snapshot.status) console.log(`${s.ok ? 'ok  ' : 'FAIL'} ${s.name}${s.ok ? ` (${s.count ?? '-'})` : `: ${s.error}`}`);
 console.log(`news=${snapshot.news.length} quakes=${snapshot.quakes.length} disasters=${snapshot.disasters.length}`);
 const en = snapshot.enrichment;
-console.log(`enrich: mode=${en.mode} reused=${en.reused} added=${en.added} tokens(in/out)=${en.inputTokens}/${en.outputTokens} translator=${en.translator ?? '-'} msChars=${en.msChars}`);
+console.log(`translate: ${en.translator ?? 'なし'} reused=${en.reused} translated=${en.translated} chars=${en.msChars}`);
 for (const e of en.errors) console.warn(`  enrich error: ${e}`);
 
 // すべて失敗した場合はデプロイを止める（古い成功版を壊さないため）

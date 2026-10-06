@@ -14,8 +14,8 @@
 
 ### ニュースの翻訳と金関連度
 - 海外ニュースの見出しを日本語に翻訳（「原文も表示」で英語の見出しと要約も確認可能）
-- 各ニュースに金相場との関連度（高・中・低）と、金価格にとって上昇要因か下落要因かの推定、その理由を表示。関連度で色分け・絞り込み・並び替えができます
-- 翻訳の方法は3通り（下記「翻訳の設定」）。どれも設定しなければ英語のまま表示し、関連度はキーワードで簡易判定します
+- 各ニュースに金相場との関連度（高・中・低）を見出しのキーワードで判定して表示。関連度で色分け・絞り込み・並び替えができます
+- 翻訳は無料の2通り（下記「翻訳の設定」）。どちらも使えない環境では英語のまま表示します
 
 ### 世界情勢
 
@@ -48,24 +48,16 @@ GitHub Actions（毎時）
 
 ## 翻訳の設定
 
-| 方法 | 費用 | 設定 | 関連度の判定 |
-| --- | --- | --- | --- |
-| ブラウザ内蔵の翻訳（Chrome） | 無料 | 不要。Chrome（パソコン版）で開くと「ブラウザ内で翻訳する」ボタンが出る | キーワード |
-| Microsoft Translator | 無料（月200万文字まで。超えると止まるだけで課金なし） | 下記 | キーワード |
-| Claude API | 従量課金 | 下記 | AI（理由・上昇/下落要因つき） |
+| 方法 | 費用 | 設定 |
+| --- | --- | --- |
+| ブラウザ内蔵の翻訳（Chrome） | 無料 | 不要。パソコン版 Chrome で開くと「ブラウザ内で翻訳する」ボタンが出る |
+| Microsoft Translator | 無料（月200万文字まで。超えると止まるだけで課金なし） | 下記（任意） |
 
-複数設定した場合は Claude → Microsoft Translator → ブラウザ の順に使います。どの方法でも、前回公開した訳はリンク単位で再利用し、新しく出た見出しだけを翻訳します。
+Microsoft Translator を設定すると、自動更新のときに見出しを訳しておくので、スマホや他のブラウザでも日本語で表示されます。前回公開した訳はリンク単位で再利用し、新しく出た見出しだけを翻訳します。
 
-### Microsoft Translator（無料枠）
 1. [Azure](https://azure.microsoft.com/) のアカウントを作成し、「Translator」リソースを価格レベル **F0（Free）** で作成
 2. リソースの「キーとエンドポイント」からキーと場所（例: `japaneast`）を確認
 3. リポジトリの **Settings → Secrets and variables → Actions** で、Secret に `AZURE_TRANSLATOR_KEY`、Variable に `AZURE_TRANSLATOR_REGION` を登録
-
-### Claude API
-1. [Claude Console](https://console.anthropic.com/) で API キーを発行
-2. Secret に `ANTHROPIC_API_KEY` を登録
-
-モデルは既定で `claude-opus-5-5`。費用を抑えたい場合は Variable に `CLAUDE_MODEL`（例: `claude-haiku-4-5`）を登録すると切り替えられます。1回あたり最大200件まで送ります。
 
 ## ローカルで動かす
 
@@ -82,7 +74,7 @@ npm test
 | やりたいこと | 編集する場所 |
 | --- | --- |
 | ニュースの配信元・金関連ニュースの検索語を変更 | `scripts/lib/sources.mjs` |
-| 金関連度の判定基準・翻訳の指示 | `scripts/lib/enrich.mjs` の `SYSTEM`（キーワード判定は `TIERS`） |
+| 金関連度の判定キーワード | `scripts/lib/enrich.mjs` の `TIERS` |
 | 国名の別名（「米国」「Kremlin」など）を追加 | `scripts/gen-countries.mjs` の `EXTRA` → `npm run gen:countries` |
 | 表示する通貨 | `scripts/lib/snapshot.mjs` の `FX_CODES` |
 | 世界時計の都市 | `public/js/app.js` の `CLOCKS` |

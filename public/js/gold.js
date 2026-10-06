@@ -412,7 +412,7 @@ function renderGoldNews() {
   const all = state.snap?.goldNews ?? [];
   // 絞り込み・並び替え・原文表示の設定は世界情勢のニュース欄と共通
   const list = applyPrefs(all);
-  $('gold-news-prefs').replaceChildren(prefControls(), relLegend(all));
+  $('gold-news-prefs').replaceChildren(prefControls(), relLegend());
   if (!list.length) {
     $('gold-news').replaceChildren(h('li', { class: 'empty' }, all.length ? '条件に合うニュースはありません' : '金関連のニュースはまだありません'));
     return;

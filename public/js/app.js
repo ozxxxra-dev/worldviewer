@@ -256,7 +256,7 @@ function renderNews() {
 
   $('news-title').textContent = state.country ? `${countryName(state.country)} のニュース（${items.length}件）` : `最新ニュース（${items.length}件）`;
   $('clear-country').hidden = !state.country;
-  $('news-prefs').replaceChildren(prefControls(), relLegend(state.snap.news));
+  $('news-prefs').replaceChildren(prefControls(), relLegend());
 
   if (!items.length) {
     $('news').replaceChildren(h('li', { class: 'empty' }, '該当するニュースはありません'));
