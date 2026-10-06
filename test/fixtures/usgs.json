@@ -1,0 +1,5 @@
+{"type":"FeatureCollection","features":[
+{"properties":{"mag":6.1,"place":"[Sample] 100 km E of Hachinohe, Japan","time":1791270000000,"url":"https://example.com/usgs/1","tsunami":1},"geometry":{"coordinates":[142.6,40.5,30]}},
+{"properties":{"mag":4.8,"place":"[Sample] Fiji region","time":1791250000000,"url":"https://example.com/usgs/2","tsunami":0},"geometry":{"coordinates":[-178.2,-18.1,550]}},
+{"properties":{"mag":5.4,"place":"[Sample] Southern Chile","time":1791200000000,"url":"https://example.com/usgs/3","tsunami":0},"geometry":{"coordinates":[-72.9,-38.7,25]}}
+]}

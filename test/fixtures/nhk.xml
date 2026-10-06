@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"><channel><title>NHK 国際</title>
+<item><title>[サンプル] 南スーダンで和平協議 再開へ</title><link>https://example.com/nhk/1</link><pubDate>Tue, 06 Oct 2026 10:00:00 +0900</pubDate><description>サンプル記事です。</description></item>
+<item><title>[サンプル] 米国と中国 貿易協議を継続</title><link>https://example.com/nhk/2</link><pubDate>Tue, 06 Oct 2026 08:30:00 +0900</pubDate><description>アメリカと中国の閣僚が会談。</description></item>
+<item><title>[サンプル] ウクライナ東部の情勢</title><link>https://example.com/nhk/3</link><pubDate>Mon, 05 Oct 2026 22:00:00 +0900</pubDate><description>ロシアとの前線について。</description></item>
+<item><title>[サンプル] 古い記事</title><link>https://example.com/nhk/old</link><pubDate>Thu, 01 Oct 2026 00:00:00 +0900</pubDate><description>48時間より古いので除外される。</description></item>
+</channel></rss>

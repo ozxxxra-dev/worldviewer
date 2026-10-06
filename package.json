@@ -1,0 +1,32 @@
+{
+  "name": "worldviewer",
+  "version": "1.0.0",
+  "description": "世界情勢を一望するダッシュボード",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "fetch": "node scripts/fetch-data.mjs",
+    "fetch:sample": "node scripts/fetch-data.mjs --fixtures test/fixtures",
+    "dev": "npm run build && npm run fetch:sample && node scripts/serve.mjs",
+    "test": "node --test test/*.test.mjs",
+    "gen:countries": "node scripts/gen-countries.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ozxxxra-dev/worldviewer.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ozxxxra-dev/worldviewer/issues"
+  },
+  "homepage": "https://github.com/ozxxxra-dev/worldviewer#readme",
+  "dependencies": {
+    "fast-xml-parser": "^5.11.2"
+  },
+  "devDependencies": {
+    "d3": "^7.9.0",
+    "i18n-iso-countries": "^7.14.0",
+    "topojson-client": "^3.1.0",
+    "world-atlas": "^2.0.2"
+  },
+  "private": true,
+  "type": "module"
+}

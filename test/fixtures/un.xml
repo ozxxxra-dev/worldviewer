@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom"><title>UN</title>
+<entry><title>[Sample] Humanitarian appeal for Sudan and Chad</title><link rel="alternate" href="https://example.com/un/1"/><updated>2026-10-06T11:00:00Z</updated><summary>Sample.</summary></entry>
+<entry><title>[Sample] Myanmar refugees in Bangladesh</title><link href="https://example.com/un/2"/><updated>2026-10-06T03:00:00Z</updated><summary>Sample.</summary></entry>
+</feed>

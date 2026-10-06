@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>World Viewer — 世界情勢ダッシュボード</title>
+  <meta name="description" content="世界のニュース・地震・災害警報・為替を地図で一望するダッシュボード">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌏</text></svg>">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <h1>World Viewer</h1>
+      <span class="sub">世界情勢ダッシュボード</span>
+    </div>
+    <div class="meta" id="meta">読み込み中…</div>
+    <div class="clocks" id="clocks" aria-label="世界時計"></div>
+  </header>
+
+  <div id="sample-banner" class="banner" hidden>
+    表示中のデータは<strong>オフライン確認用のサンプル</strong>です。実データは GitHub Actions が1時間ごとに取得します。
+  </div>
+
+  <main class="grid">
+    <section class="card map-card" aria-label="世界地図">
+      <div class="card-head">
+        <h2>世界地図</h2>
+        <div class="layers" role="group" aria-label="表示レイヤー">
+          <label><input type="checkbox" data-layer="news" checked> ニュース量</label>
+          <label><input type="checkbox" data-layer="quakes" checked> 地震</label>
+          <label><input type="checkbox" data-layer="disasters" checked> 災害警報</label>
+        </div>
+      </div>
+      <div class="map-wrap" id="map-wrap">
+        <svg id="map" role="img" aria-label="国別のニュース件数と地震・災害の位置"></svg>
+        <div class="tooltip" id="tooltip" hidden></div>
+        <div class="map-ctrl">
+          <button type="button" id="zoom-in" aria-label="拡大">＋</button>
+          <button type="button" id="zoom-out" aria-label="縮小">－</button>
+          <button type="button" id="zoom-reset" aria-label="全体表示">⟲</button>
+        </div>
+        <div class="legend" id="legend"></div>
+      </div>
+      <div class="hot" id="hot" aria-label="話題の国"></div>
+    </section>
+
+    <section class="card news-card" aria-label="ニュース">
+      <div class="card-head">
+        <h2 id="news-title">最新ニュース</h2>
+        <button type="button" class="chip clear" id="clear-country" hidden>✕ 国の絞り込みを解除</button>
+      </div>
+      <div class="filters">
+        <input type="search" id="q" placeholder="キーワードで絞り込み" aria-label="キーワード">
+        <div class="chips" id="source-chips" role="group" aria-label="配信元"></div>
+      </div>
+      <ol class="news" id="news"></ol>
+    </section>
+
+    <section class="card" aria-label="地震">
+      <div class="card-head"><h2>地震 <small>M4.5以上・過去7日</small></h2></div>
+      <ol class="list" id="quakes"></ol>
+    </section>
+
+    <section class="card" aria-label="災害警報">
+      <div class="card-head"><h2>災害警報 <small>GDACS</small></h2></div>
+      <ol class="list" id="disasters"></ol>
+    </section>
+
+    <section class="card" aria-label="為替">
+      <div class="card-head"><h2>為替 <small id="fx-updated"></small></h2></div>
+      <table class="fx" id="fx"></table>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <details>
+      <summary>データの取得元と状態</summary>
+      <ul id="status"></ul>
+      <p>ニュースは各社RSSの見出しを機械的に国名で分類しています。見出しの言語は配信元のままです。各記事の権利は配信元に帰属します。</p>
+    </details>
+  </footer>
+
+  <script src="vendor/d3.min.js"></script>
+  <script src="vendor/topojson-client.min.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
