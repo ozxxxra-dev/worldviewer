@@ -1,6 +1,7 @@
 /* global d3, topojson */
 import { $, h, ago, fmtDate, cssVar } from './util.js';
 import { initGold, updateGold } from './gold.js';
+import { renderMarkets } from './markets.js';
 import { newsItem, applyPrefs, prefControls, relLegend, initBrowserTranslate, queueBrowserTranslation } from './news.js';
 
 const REFRESH_MS = 15 * 60 * 1000;
@@ -371,6 +372,7 @@ function renderAll() {
   renderDisasters();
   renderFx();
   renderStatus();
+  renderMarkets(state.snap);
 }
 
 /* ---------- 起動 ---------- */

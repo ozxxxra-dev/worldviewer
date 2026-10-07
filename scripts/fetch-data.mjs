@@ -10,6 +10,9 @@ import { join } from 'node:path';
 import { buildSnapshot } from './lib/snapshot.mjs';
 import { enrichNews, prevMap } from './lib/enrich.mjs';
 import { FRED_SERIES, parseFredCsv, buildFactors } from './lib/factors.mjs';
+import { CALENDAR_URLS, parseCalendar } from './lib/calendar.mjs';
+import { COT_URL, parseCot } from './lib/cot.mjs';
+import { GVZ_ID, gvzSummary, realizedVol, volLabel } from './lib/volatility.mjs';
 import { scoreHistory, compareFilters, toCsv, latestScoreCsv, printReport } from './lib/backtest.mjs';
 
 const args = process.argv.slice(2);
@@ -63,7 +66,7 @@ async function loadFred() {
   const since = new Date(Date.now() - 5 * 365 * 864e5).toISOString().slice(0, 10);
   const out = {};
   await Promise.all(
-    FRED_SERIES.map(async (s) => {
+    [...FRED_SERIES, { id: GVZ_ID, name: '金のボラティリティ指数（GVZ）' }].map(async (s) => {
       try {
         const text = fixtureDir
           ? readFileSync(join(fixtureDir, `fred-${s.id}.csv`), 'utf8')
@@ -81,7 +84,47 @@ async function loadFred() {
 }
 const goldHistory = JSON.parse(readFileSync(new URL('../public/data/gold-history.json', import.meta.url), 'utf8'));
 const fred = await loadFred();
+
+// 経済指標カレンダー（今週・来週）。来週分はまだ公開されていないことがあるので個別に失敗を許す
+{
+  const lists = [];
+  const errors = [];
+  for (const [i, url] of CALENDAR_URLS.entries()) {
+    try {
+      const text = fixtureDir ? readFileSync(join(fixtureDir, `calendar-${i}.json`), 'utf8') : await getRemote('calendar', { url });
+      lists.push(JSON.parse(text));
+    } catch (e) {
+      errors.push(`${i ? '来週' : '今週'}: ${String(e?.message ?? e).slice(0, 100)}`);
+    }
+  }
+  snapshot.calendar = parseCalendar(lists);
+  snapshot.status.push(
+    lists.length
+      ? { id: 'calendar', name: '経済指標カレンダー', ok: true, count: snapshot.calendar.length, ...(errors.length ? { note: errors.join(' / ') } : {}) }
+      : { id: 'calendar', name: '経済指標カレンダー', ok: false, error: errors.join(' / ') },
+  );
+}
+
+// 投機筋のポジション（CFTC 建玉明細）
+try {
+  const text = fixtureDir ? readFileSync(join(fixtureDir, 'cot.json'), 'utf8') : await getRemote('cot', { url: COT_URL });
+  snapshot.cot = parseCot(JSON.parse(text));
+  snapshot.status.push({ id: 'cot', name: 'CFTC 建玉明細（金）', ok: true, count: snapshot.cot.series.length });
+} catch (e) {
+  snapshot.cot = null;
+  snapshot.status.push({ id: 'cot', name: 'CFTC 建玉明細（金）', ok: false, error: String(e?.message ?? e).slice(0, 200) });
+}
 snapshot.factors = buildFactors({ fred, goldHistory, goldNews: snapshot.goldNews });
+
+// 値動きの荒さ
+{
+  const gvz = gvzSummary(fred[GVZ_ID]);
+  const realized = realizedVol(goldHistory);
+  snapshot.volatility = {
+    gvz: gvz && { ...gvz, level: volLabel(gvz.percentile) },
+    realized: realized && { ...realized, level: volLabel(realized.percentile) },
+  };
+}
 // EA が読む最新スコア（GitHub Pages でも公開され、Windows VPS では MT4 の共通フォルダにコピーされる）
 writeFileSync(new URL('../public/data/gold-score.csv', import.meta.url), latestScoreCsv(snapshot.factors));
 
@@ -97,6 +140,7 @@ if (Object.keys(fred).length) {
 writeFileSync(outPath, JSON.stringify(snapshot));
 for (const s of snapshot.status) console.log(`${s.ok ? 'ok  ' : 'FAIL'} ${s.name}${s.ok ? ` (${s.count ?? '-'})` : `: ${s.error}`}`);
 console.log(`news=${snapshot.news.length} quakes=${snapshot.quakes.length} disasters=${snapshot.disasters.length}`);
+console.log(`calendar=${snapshot.calendar.length} cot=${snapshot.cot ? `${snapshot.cot.date} net=${snapshot.cot.net} pct=${snapshot.cot.percentile}` : 'n/a'} gvz=${snapshot.volatility.gvz?.value ?? 'n/a'} rv=${snapshot.volatility.realized?.value ?? 'n/a'}`);
 const f = snapshot.factors;
 console.log(`factors: total=${f.total} macro=${f.macro} verdict=${f.verdict} ` + f.items.map((i) => `${i.key}:${i.ok ? i.point : 'n/a'}`).join(' '));
 const en = snapshot.enrichment;

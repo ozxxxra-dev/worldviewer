@@ -18,6 +18,7 @@
 | 金相場の方向感（要因スコア） | 下の §3 | `scripts/lib/factors.mjs`, `public/js/gold.js` の `renderScore` |
 | 金関連ニュース | Google ニュース検索 RSS（日英）＋一般ニュースから金・金利関連をキーワード抽出 | `scripts/lib/snapshot.mjs` |
 | 世界情勢 | 世界地図（国別ニュース件数・地震・災害警報）、ニュース一覧（7社 RSS）、地震（USGS）、災害警報（GDACS）、為替 | `public/js/app.js` |
+| 経済指標カレンダー・値動きの荒さ（GVZ・実現変動率）・投機筋のポジション（CFTC） | Forex Factory 週間カレンダー JSON、FRED GVZCLS、CFTC 公開 API（`72hh-3qpy`, 金 088691）。EA への組み込みはユーザー判断で見送り中 | `scripts/lib/calendar.mjs`, `volatility.mjs`, `cot.mjs`, `public/js/markets.js` |
 | ニュースの金関連度 | 見出しのキーワードで 高/中/低 を判定（`scripts/lib/enrich.mjs` の `TIERS`） | `public/js/news.js` |
 | 翻訳 | 無料の手段のみ。Chrome 内蔵の Translator API（ブラウザ側）と、任意で Microsoft Translator 無料枠（`AZURE_TRANSLATOR_KEY`、未設定） | `public/js/news.js`, `scripts/lib/enrich.mjs` |
 

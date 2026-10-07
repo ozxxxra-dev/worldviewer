@@ -341,7 +341,7 @@ function renderFactors() {
 
 /* --- 関連指標（銀・金銀比価・ドル円） --- */
 
-function spark(values, w = 120, hgt = 32) {
+export function spark(values, w = 120, hgt = 32) {
   const x = d3.scaleLinear([0, values.length - 1], [1, w - 1]);
   const y = d3.scaleLinear(d3.extent(values), [hgt - 2, 2]);
   const svg = d3.create('svg').attr('viewBox', `0 0 ${w} ${hgt}`).attr('class', 'spark').attr('aria-hidden', 'true');

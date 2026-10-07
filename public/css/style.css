@@ -184,6 +184,7 @@ h3 { margin: 0; font-size: 15px; }
   grid-template-areas:
     "hero chart chart"
     "score score score"
+    "cal vol cot"
     "factor related gnews"
     "cur cur gnews";
   align-items: start;
@@ -195,12 +196,12 @@ h3 { margin: 0; font-size: 15px; }
 .gnews-card { grid-area: gnews; height: 0; min-height: 100%; }
 .cur-card { grid-area: cur; }
 @media (max-width: 1100px) {
-  .gold-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-areas: "hero hero" "chart chart" "score score" "factor related" "cur cur" "gnews gnews"; }
+  .gold-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-areas: "hero hero" "chart chart" "score score" "cal cal" "vol cot" "factor related" "cur cur" "gnews gnews"; }
   .gnews-card { height: auto; min-height: 0; }
   .gnews-card .news { max-height: 480px; }
 }
 @media (max-width: 680px) {
-  .gold-grid { grid-template-columns: minmax(0, 1fr); grid-template-areas: "hero" "chart" "score" "factor" "related" "cur" "gnews"; }
+  .gold-grid { grid-template-columns: minmax(0, 1fr); grid-template-areas: "hero" "chart" "score" "cal" "vol" "cot" "factor" "related" "cur" "gnews"; }
   .section-head { padding: 12px 16px 0; }
 }
 
@@ -308,3 +309,42 @@ h3 { margin: 0; font-size: 15px; }
 .score-name small { margin-left: 8px; }
 .score-detail { font-size: 13px; font-variant-numeric: tabular-nums; }
 .score-why { font-size: 11px; color: var(--muted); }
+
+/* ---------- 経済指標カレンダー・値動きの荒さ・投機筋 ---------- */
+.cal-card { grid-area: cal; align-self: stretch; }
+.vol-card { grid-area: vol; align-self: stretch; }
+.cot-card { grid-area: cot; align-self: stretch; }
+.cal-next { margin: 0 14px 8px; padding: 8px 10px; border-radius: 8px; background: var(--gold-soft); font-size: 13px; display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: baseline; }
+.cal-next-label { font-size: 11px; color: var(--muted); }
+.cal-until { margin-left: auto; font-weight: 700; color: var(--gold); font-variant-numeric: tabular-nums; }
+.cal { list-style: none; margin: 0; padding: 0 6px 10px; max-height: 420px; overflow-y: auto; }
+.cal-day { padding: 8px 8px 2px; font-size: 12px; font-weight: 700; color: var(--muted); border-top: 1px solid var(--line); }
+.cal-day:first-child { border-top: 0; }
+.cal-item { display: grid; grid-template-columns: 42px 22px minmax(0, 1fr) 24px; gap: 8px; align-items: start; padding: 5px 8px; }
+.cal-item.past { opacity: .5; }
+.cal-item.next { background: var(--gold-soft); border-radius: 6px; }
+.cal-time { font-variant-numeric: tabular-nums; font-size: 13px; }
+.cal-country { font-size: 11px; border: 1px solid var(--line); border-radius: 4px; text-align: center; color: var(--muted); }
+.cal-title { font-size: 13px; font-weight: 600; }
+.cal-nums { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.imp { font-size: 11px; font-weight: 700; text-align: center; border-radius: 4px; line-height: 18px; }
+.imp.i3 { background: var(--down); color: var(--card); }
+.imp.i2 { color: var(--orange); box-shadow: inset 0 0 0 1px var(--orange); }
+.imp.i1 { color: var(--muted); box-shadow: inset 0 0 0 1px var(--line); }
+
+.vol { padding: 0 14px 14px; display: flex; flex-direction: column; gap: 6px; }
+.vol-block + .vol-block { border-top: 1px solid var(--line); padding-top: 10px; margin-top: 6px; }
+.vol-block { display: flex; flex-direction: column; gap: 6px; }
+.vol-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-weight: 600; font-size: 13px; }
+.vol-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.vol-row .spark { grid-area: auto; }
+.vol-value { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.vol-sub { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.lvl { font-size: 11px; font-weight: 700; border-radius: 4px; padding: 1px 7px; white-space: nowrap; box-shadow: inset 0 0 0 1px var(--line); color: var(--muted); }
+.lvl.high { background: var(--orange); color: var(--card); box-shadow: none; }
+.lvl.low { color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.meter { position: relative; height: 6px; border-radius: 3px; background: linear-gradient(90deg, var(--line), var(--gold)); margin: 4px 0; }
+.meter span { position: absolute; top: 50%; width: 12px; height: 12px; border-radius: 50%; background: var(--ink); border: 2px solid var(--card); transform: translate(-50%, -50%); }
+.meter-ends { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
+.cot-chart { width: 100%; height: auto; display: block; margin-top: 6px; }
+.cot-chart .axis { fill: var(--muted); font-size: 10px; }
