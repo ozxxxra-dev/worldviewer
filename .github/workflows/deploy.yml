@@ -30,6 +30,8 @@ jobs:
       - run: npm run build
       - id: pages
         uses: actions/configure-pages@v5
+      - name: Update gold price history
+        run: node scripts/update-gold.mjs
       - run: npm run fetch
         env:
           # 任意: 見出しの翻訳（Microsoft Translator の無料枠 F0）。未設定なら訳なし
@@ -37,8 +39,6 @@ jobs:
           AZURE_TRANSLATOR_REGION: ${{ vars.AZURE_TRANSLATOR_REGION }}
           # 前回公開分の翻訳を再利用して、新しい見出しだけを翻訳する
           PREV_SNAPSHOT_URL: ${{ steps.pages.outputs.base_url }}/data/snapshot.json
-      - name: Update gold price history
-        run: node scripts/update-gold.mjs
       - name: Commit gold price history
         if: github.ref == 'refs/heads/main'
         run: |

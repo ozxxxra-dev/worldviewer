@@ -9,6 +9,7 @@ import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { buildSnapshot } from './lib/snapshot.mjs';
 import { enrichNews, prevMap } from './lib/enrich.mjs';
+import { FRED_SERIES, parseFredCsv, buildFactors } from './lib/factors.mjs';
 
 const args = process.argv.slice(2);
 const fixtureDir = args.includes('--fixtures') ? args[args.indexOf('--fixtures') + 1] : null;
@@ -55,9 +56,35 @@ snapshot.enrichment = await enrichNews([...snapshot.news, ...snapshot.goldNews],
   ms: !fixtureDir && process.env.AZURE_TRANSLATOR_KEY ? { key: process.env.AZURE_TRANSLATOR_KEY, region: process.env.AZURE_TRANSLATOR_REGION } : null,
 });
 
+// 金相場の要因スコア（FRED の指標 + 金価格のトレンド + ニュースの論調）
+async function loadFred() {
+  const since = new Date(Date.now() - 3 * 365 * 864e5).toISOString().slice(0, 10);
+  const out = {};
+  await Promise.all(
+    FRED_SERIES.map(async (s) => {
+      try {
+        const text = fixtureDir
+          ? readFileSync(join(fixtureDir, `fred-${s.id}.csv`), 'utf8')
+          : await getRemote('fred', { url: `https://fred.stlouisfed.org/graph/fredgraph.csv?id=${s.id}&cosd=${since}` });
+        const rows = parseFredCsv(text);
+        if (!rows.length) throw new Error('no rows');
+        out[s.id] = rows;
+        snapshot.status.push({ id: `fred-${s.id}`, name: `FRED ${s.name}`, ok: true, count: rows.length });
+      } catch (e) {
+        snapshot.status.push({ id: `fred-${s.id}`, name: `FRED ${s.name}`, ok: false, error: String(e?.message ?? e).slice(0, 200) });
+      }
+    }),
+  );
+  return out;
+}
+const goldHistory = JSON.parse(readFileSync(new URL('../public/data/gold-history.json', import.meta.url), 'utf8'));
+snapshot.factors = buildFactors({ fred: await loadFred(), goldHistory, goldNews: snapshot.goldNews });
+
 writeFileSync(outPath, JSON.stringify(snapshot));
 for (const s of snapshot.status) console.log(`${s.ok ? 'ok  ' : 'FAIL'} ${s.name}${s.ok ? ` (${s.count ?? '-'})` : `: ${s.error}`}`);
 console.log(`news=${snapshot.news.length} quakes=${snapshot.quakes.length} disasters=${snapshot.disasters.length}`);
+const f = snapshot.factors;
+console.log(`factors: total=${f.total} verdict=${f.verdict} ` + f.items.map((i) => `${i.key}:${i.ok ? i.point : 'n/a'}`).join(' '));
 const en = snapshot.enrichment;
 console.log(`translate: ${en.translator ?? 'なし'} reused=${en.reused} translated=${en.translated} chars=${en.msChars}`);
 for (const e of en.errors) console.warn(`  enrich error: ${e}`);

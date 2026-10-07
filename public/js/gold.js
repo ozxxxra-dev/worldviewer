@@ -426,11 +426,86 @@ function renderGoldNews() {
   );
 }
 
+/* --- 要因スコア（金相場の方向感） --- */
+
+const VERDICT = {
+  up: ['上昇優勢', 'up'],
+  'lean-up': ['やや上昇', 'up'],
+  neutral: ['中立', ''],
+  'lean-down': ['やや下落', 'down'],
+  down: ['下落優勢', 'down'],
+};
+
+const fmtPoint = (p) => (p > 0 ? `+${p}` : p < 0 ? `−${-p}` : '0');
+
+function factorDetail(it) {
+  if (!it.ok) return 'データを取得できませんでした';
+  if (it.key === 'trend') return `${it.desc}（$${Math.round(it.value).toLocaleString()} / 50日平均 $${Math.round(it.m50).toLocaleString()} / 200日平均 $${Math.round(it.m200).toLocaleString()}）`;
+  if (it.key === 'news') return `上昇を伝える見出し ${it.up}件・下落を伝える見出し ${it.down}件`;
+  const v = it.value.toFixed(it.digits);
+  const c = it.change;
+  const arrow = c > 0 ? '▲' : c < 0 ? '▼' : '→';
+  return `${v}${it.unit}（1ヶ月で ${arrow}${Math.abs(c).toFixed(it.digits)}${it.unit}・${it.date.replaceAll('-', '/')}時点）`;
+}
+
+function renderScore() {
+  const f = state.snap?.factors;
+  const card = $('gold-score-card');
+  if (!f || !f.usable) {
+    card.hidden = true;
+    return;
+  }
+  card.hidden = false;
+  const [label, cls] = VERDICT[f.verdict];
+  const pos = (f.total + 100) / 2;
+
+  $('gold-score').replaceChildren(
+    h(
+      'div',
+      { class: 'score-summary' },
+      h('div', { class: `score-verdict ${cls}` }, label),
+      h('div', { class: `score-total ${cls}` }, fmtPoint(f.total), h('small', {}, ' / ±100')),
+      h(
+        'div',
+        { class: 'score-gauge', role: 'img', 'aria-label': `総合スコア ${f.total}（−100が下落、+100が上昇）` },
+        h('span', { class: 'score-mid' }),
+        h('span', { class: 'score-marker', style: `left:${pos}%` }),
+      ),
+      h('div', { class: 'score-ends' }, h('span', {}, '下落要因が優勢'), h('span', {}, '上昇要因が優勢')),
+      h(
+        'p',
+        { class: 'note' },
+        '各指標の直近1ヶ月の動きを、過去の典型的な変動幅と比べて −2〜+2 点で評価し、重みを掛けて合計したものです。金相場の「追い風・向かい風」の目安で、将来の価格を予測するものではありません。',
+      ),
+    ),
+    h(
+      'ul',
+      { class: 'score-items' },
+      ...f.items.map((it) =>
+        h(
+          'li',
+          { class: it.ok ? '' : 'na' },
+          h('span', { class: `pt p${it.ok ? it.point : 'na'}`, title: '金にとっての点数（+は追い風、−は向かい風）' }, it.ok ? fmtPoint(it.point) : '—'),
+          h(
+            'div',
+            { class: 'score-body' },
+            h('div', { class: 'score-name' }, it.name, h('small', {}, `重み ×${it.weight}`)),
+            h('div', { class: 'score-detail' }, factorDetail(it)),
+            h('div', { class: 'score-why' }, it.why),
+          ),
+          it.ok && it.spark?.length > 2 ? spark(it.spark) : h('span'),
+        ),
+      ),
+    ),
+  );
+}
+
 function renderGold() {
   if (!state.history.length) return;
   renderControls();
   renderHero();
   renderChart();
+  renderScore();
   renderFactors();
   renderRelated();
   renderCurrencies();
