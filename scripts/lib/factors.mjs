@@ -194,5 +194,11 @@ export function buildFactors({ fred, goldHistory, goldNews, now = new Date() }) 
   const total = maxScore ? Math.round((raw / maxScore) * 100) : 0;
   const verdict = total >= 30 ? 'up' : total <= -30 ? 'down' : total >= 10 ? 'lean-up' : total <= -10 ? 'lean-down' : 'neutral';
 
-  return { generatedAt: now.toISOString(), total: clamp(total, -100, 100), verdict, usable: usable.length, items };
+  // マクロ指標（FRED）だけのスコア。75日線とは別の情報を持つので EA のフィルター候補（HANDOFF.md §4）
+  const fredKeys = new Set(FRED_SERIES.map((s) => s.key));
+  const macroItems = usable.filter((i) => fredKeys.has(i.key));
+  const macroMax = macroItems.reduce((a, i) => a + 2 * i.weight, 0);
+  const macro = macroMax ? Math.round((macroItems.reduce((a, i) => a + i.point * i.weight, 0) / macroMax) * 100) : null;
+
+  return { generatedAt: now.toISOString(), total: clamp(total, -100, 100), macro, verdict, usable: usable.length, items };
 }

@@ -74,20 +74,20 @@
    - FRED の取得期間を延ばす（`scripts/fetch-data.mjs` の `loadFred` は5年分。DFII10 は 2003 年〜、DTWEXBGS は 2006 年〜ある）。
    - 見たい点: マクロのみスコアを「買い止めフィルター」にしたとき、75日線単独より成績が良くなるか。下落・横ばい相場（例: 2013〜2015 年）での挙動。
    - しきい値（±30）や重みを過去データで最適化すると過剰最適化になりやすい。調整するなら期間を分けて確認すること。
-2. **MT4 用の部品（MQL4）**
-   - 本番: `WebRequest()` で最新スコアを取得（MT4 の「ツール → オプション → エキスパートアドバイザ」で URL の許可が必要）。
-   - ストラテジーテスター: `WebRequest()` は動かないので、`score-history.csv`（`date,score,macro,close,ma75`、日付は `YYYY.MM.DD`）を `FILE_COMMON` フォルダから読む。
-   - 想定する使い方: 75日線の判定はそのまま、`macro <= -30` のときは新規の買いを見送る。
-   - EA から読みやすい最新値だけのファイル（例: `public/data/score.txt` に `日付,総合,マクロ,判定`）を追加すると楽。**未実装。**
+2. **MT4 への組み込み**（部品は作成済み・**未コンパイル・未検証**）
+   - ユーザーの VPS は **Windows**、MT4 と同じ VPS で動かす方針。手順は `windows/README.md`。
+   - `windows/update.ps1`: git pull → 金価格履歴の更新 → データ取得 → `gold-score.csv`（最新値）と `score-history.csv`（各営業日）を MT4 の共通フォルダ `%APPDATA%\MetaQuotes\Terminal\Common\Files` にコピー。`windows/register-task.ps1` でタスクスケジューラに登録（優先度「通常以下」、既定60分ごと）。
+   - `mt4/GoldScore.mqh`: `GoldScore_AllowBuy()` / `GoldScore_AllowSell()`。本番は `gold-score.csv`、テスターは `score-history.csv` の**前営業日**の値を使う（WebRequest は使わない）。既定はマクロのみスコアで ±30。
+   - PowerShell と MQL4 はクラウド環境で実行・コンパイルできなかった。**最初に MetaEditor でコンパイルし、VPS で update.ps1 を手動実行して確認すること。**
    - ユーザーの既存 EA のエントリー条件の場所はまだ聞けていない。
-3. **サイトに「マクロのみスコア」を表示**（未実装。CSV には入っている）。
+3. **サイトに「マクロのみスコア」を表示**（未実装。`snapshot.factors.macro` と CSV には入っている）。
 4. 自動更新の安定化（§6）をユーザーが設定したか確認する。
 
 ## 6. 運用メモ・落とし穴
 
 - **main には自動コミットが入る**: ワークフローが `public/data/gold-history.json` に日次の金価格を追記してコミットする（`data: 金価格の履歴を更新`）。push 前に必ず `git pull`（rebase ではなく merge 推奨）。
 - **金価格データの出典**: `@fawazahmed0/currency-api`（毎日 npm に日付版が公開される。jsDelivr → npm レジストリの順に取得）。国際価格をドル円で換算した値で、国内店頭価格（手数料・税込み）とは違う。銀は1日だけの異常値を除去している（`mergeHistory` の `removeSpikes`）。プラチナ・パラジウムはデータが荒いので除外。
-- **生成物は git に入れない**: `public/vendor/`、`public/data/snapshot.json`、`score-history.csv`、`score-backtest.json` は `.gitignore` 済み。ローカルでは `npm run build` と `npm run fetch`（ネット接続あり）または `npm run fetch:sample`（サンプルデータ）で作る。
+- **生成物は git に入れない**: `public/vendor/`、`public/data/snapshot.json`、`score-history.csv`、`score-backtest.json`、`gold-score.csv`、`logs/` は `.gitignore` 済み。`gold-score.csv` は GitHub Pages でも公開される（`/data/gold-score.csv`）。ローカルでは `npm run build` と `npm run fetch`（ネット接続あり）または `npm run fetch:sample`（サンプルデータ）で作る。
 - **サンプルデータ**: `test/fixtures/`。`fred-*.csv` は乱数で作った**架空の値**なので、検証には使わないこと。
 - **外部 cron の手順（ユーザーに案内済み）**: GitHub の fine-grained token（このリポジトリのみ、Actions: Read and write）を作り、cron-job.org から毎時 `POST https://api.github.com/repos/ozxxxra-dev/worldviewer/actions/workflows/deploy.yml/dispatches`、ヘッダ `Authorization: Bearer <token>`・`Accept: application/vnd.github+json`、本文 `{"ref":"main"}`。成功時は 204。
 - Actions のログに「Node.js 20 is deprecated」の警告が出ている（動作には影響なし）。`actions/*` を新しいメジャー版に上げれば消える。

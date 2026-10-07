@@ -10,7 +10,7 @@ import { join } from 'node:path';
 import { buildSnapshot } from './lib/snapshot.mjs';
 import { enrichNews, prevMap } from './lib/enrich.mjs';
 import { FRED_SERIES, parseFredCsv, buildFactors } from './lib/factors.mjs';
-import { scoreHistory, compareFilters, toCsv, printReport } from './lib/backtest.mjs';
+import { scoreHistory, compareFilters, toCsv, latestScoreCsv, printReport } from './lib/backtest.mjs';
 
 const args = process.argv.slice(2);
 const fixtureDir = args.includes('--fixtures') ? args[args.indexOf('--fixtures') + 1] : null;
@@ -82,6 +82,8 @@ async function loadFred() {
 const goldHistory = JSON.parse(readFileSync(new URL('../public/data/gold-history.json', import.meta.url), 'utf8'));
 const fred = await loadFred();
 snapshot.factors = buildFactors({ fred, goldHistory, goldNews: snapshot.goldNews });
+// EA が読む最新スコア（GitHub Pages でも公開され、Windows VPS では MT4 の共通フォルダにコピーされる）
+writeFileSync(new URL('../public/data/gold-score.csv', import.meta.url), latestScoreCsv(snapshot.factors));
 
 // 過去の各営業日のスコア（EA のバックテスト用 CSV）と、75日線フィルターとの比較
 if (Object.keys(fred).length) {
@@ -96,7 +98,7 @@ writeFileSync(outPath, JSON.stringify(snapshot));
 for (const s of snapshot.status) console.log(`${s.ok ? 'ok  ' : 'FAIL'} ${s.name}${s.ok ? ` (${s.count ?? '-'})` : `: ${s.error}`}`);
 console.log(`news=${snapshot.news.length} quakes=${snapshot.quakes.length} disasters=${snapshot.disasters.length}`);
 const f = snapshot.factors;
-console.log(`factors: total=${f.total} verdict=${f.verdict} ` + f.items.map((i) => `${i.key}:${i.ok ? i.point : 'n/a'}`).join(' '));
+console.log(`factors: total=${f.total} macro=${f.macro} verdict=${f.verdict} ` + f.items.map((i) => `${i.key}:${i.ok ? i.point : 'n/a'}`).join(' '));
 const en = snapshot.enrichment;
 console.log(`translate: ${en.translator ?? 'なし'} reused=${en.reused} translated=${en.translated} chars=${en.msChars}`);
 for (const e of en.errors) console.warn(`  enrich error: ${e}`);

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { scoreHistory, compareFilters, toCsv } from '../scripts/lib/backtest.mjs';
+import { scoreHistory, compareFilters, toCsv, latestScoreCsv } from '../scripts/lib/backtest.mjs';
 
 const days = (n, start = '2024-01-01') => {
   const out = [];
@@ -35,5 +35,12 @@ test('compareFilters: 向きに従った場合の損益と一致率', () => {
 });
 
 test('toCsv は MT4 向けの日付形式', () => {
-  assert.equal(toCsv([{ d: '2026-10-06', score: -72, macro: null, close: 4123.456, ma75: 4300 }]), 'date,score,macro,close,ma75\n2026.10.06,-72,,4123.46,4300.00\n');
+  assert.equal(toCsv([{ d: '2026-10-06', score: -72, macro: null, close: 4123.456, ma75: 4300 }]), 'date,score,macro,close,ma75\r\n2026.10.06,-72,,4123.46,4300.00\r\n');
+});
+
+test('latestScoreCsv', () => {
+  assert.equal(
+    latestScoreCsv({ generatedAt: '2026-10-07T09:56:39.000Z', total: -78, macro: -80, verdict: 'down' }),
+    'date,score,macro,verdict,updated\r\n2026.10.07,-78,-80,down,1791366999\r\n',
+  );
 });

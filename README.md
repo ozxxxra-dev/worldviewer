@@ -75,6 +75,10 @@ Microsoft Translator を設定すると、自動更新のときに見出しを�
 2. リソースの「キーとエンドポイント」からキーと場所（例: `japaneast`）を確認
 3. リポジトリの **Settings → Secrets and variables → Actions** で、Secret に `AZURE_TRANSLATOR_KEY`、Variable に `AZURE_TRANSLATOR_REGION` を登録
 
+## MT4（Windows VPS）で使う
+
+要因スコアを EA の方向フィルターに使う手順は [`windows/README.md`](windows/README.md)。
+
 ## ローカルで動かす
 
 ```sh

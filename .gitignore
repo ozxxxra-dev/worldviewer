@@ -3,3 +3,5 @@ public/vendor/
 public/data/snapshot.json
 public/data/score-history.csv
 public/data/score-backtest.json
+public/data/gold-score.csv
+logs/

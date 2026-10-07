@@ -1,7 +1,7 @@
 // 要因スコアを過去の各営業日について再計算し、75日移動平均フィルターと比べる。
 // 各日のスコアはその日より前に公表されたデータだけで計算する（先読みしない）。
 // ニュースの論調は過去分が無いので除く。
-import { buildFactors, FRED_SERIES } from './factors.mjs';
+import { buildFactors } from './factors.mjs';
 
 export const MA_PERIOD = 75;
 export const THRESHOLD = 30;
@@ -16,7 +16,6 @@ const isWeekday = (d) => {
 export function scoreHistory({ fred, goldHistory, from }) {
   const gold = goldHistory.filter((p) => p.usd > 0);
   const daily = gold.filter((p) => isWeekday(p.d)); // MT4 の日足に合わせて平日だけ
-  const fredKeys = new Set(FRED_SERIES.map((s) => s.key));
   const rows = [];
   for (let i = MA_PERIOD - 1; i < daily.length; i++) {
     const day = daily[i];
@@ -28,10 +27,7 @@ export function scoreHistory({ fred, goldHistory, from }) {
       goldNews: [],
       now: new Date(`${day.d}T00:00:00Z`),
     });
-    const macro = f.items.filter((it) => fredKeys.has(it.key) && it.ok);
-    const macroMax = macro.reduce((a, it) => a + 2 * it.weight, 0);
-    const macroScore = macroMax ? Math.round((macro.reduce((a, it) => a + it.point * it.weight, 0) / macroMax) * 100) : null;
-    rows.push({ d: day.d, close: day.usd, score: f.usable ? f.total : null, macro: macroScore, ma75: ma });
+    rows.push({ d: day.d, close: day.usd, score: f.usable ? f.total : null, macro: f.macro, ma75: ma });
   }
   return rows;
 }
@@ -117,11 +113,23 @@ export function compareFilters(rows) {
   return out;
 }
 
-/** EA のバックテスト用 CSV（MT4 の FileOpen で読みやすいよう日付は YYYY.MM.DD） */
+const mt4Date = (d) => d.replaceAll('-', '.');
+
+/** EA のバックテスト用 CSV（MT4 で読みやすいよう日付は YYYY.MM.DD、改行は CRLF） */
 export function toCsv(rows) {
   const lines = ['date,score,macro,close,ma75'];
-  for (const r of rows) lines.push([r.d.replaceAll('-', '.'), r.score ?? '', r.macro ?? '', r.close.toFixed(2), r.ma75.toFixed(2)].join(','));
-  return `${lines.join('\n')}\n`;
+  for (const r of rows) lines.push([mt4Date(r.d), r.score ?? '', r.macro ?? '', r.close.toFixed(2), r.ma75.toFixed(2)].join(','));
+  return `${lines.join('\r\n')}\r\n`;
+}
+
+/**
+ * EA が読む最新スコア（1行のヘッダ + 1行のデータ）。
+ * date はスコアの計算日（UTC）。EA 側で古すぎる値を判定できるよう updated（UNIX 秒）も付ける。
+ */
+export function latestScoreCsv(factors) {
+  const d = factors.generatedAt.slice(0, 10);
+  const updated = Math.floor(Date.parse(factors.generatedAt) / 1000);
+  return `date,score,macro,verdict,updated\r\n${mt4Date(d)},${factors.total},${factors.macro ?? ''},${factors.verdict},${updated}\r\n`;
 }
 
 export function printReport(rep) {
