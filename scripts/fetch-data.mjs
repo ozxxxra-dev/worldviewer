@@ -10,6 +10,7 @@ import { join } from 'node:path';
 import { buildSnapshot } from './lib/snapshot.mjs';
 import { enrichNews, prevMap } from './lib/enrich.mjs';
 import { FRED_SERIES, parseFredCsv, buildFactors } from './lib/factors.mjs';
+import { scoreHistory, compareFilters, toCsv, printReport } from './lib/backtest.mjs';
 
 const args = process.argv.slice(2);
 const fixtureDir = args.includes('--fixtures') ? args[args.indexOf('--fixtures') + 1] : null;
@@ -58,7 +59,8 @@ snapshot.enrichment = await enrichNews([...snapshot.news, ...snapshot.goldNews],
 
 // 金相場の要因スコア（FRED の指標 + 金価格のトレンド + ニュースの論調）
 async function loadFred() {
-  const since = new Date(Date.now() - 3 * 365 * 864e5).toISOString().slice(0, 10);
+  // 過去スコアの再計算で「その時点から3年」を使うため、5年分取得する
+  const since = new Date(Date.now() - 5 * 365 * 864e5).toISOString().slice(0, 10);
   const out = {};
   await Promise.all(
     FRED_SERIES.map(async (s) => {
@@ -78,7 +80,17 @@ async function loadFred() {
   return out;
 }
 const goldHistory = JSON.parse(readFileSync(new URL('../public/data/gold-history.json', import.meta.url), 'utf8'));
-snapshot.factors = buildFactors({ fred: await loadFred(), goldHistory, goldNews: snapshot.goldNews });
+const fred = await loadFred();
+snapshot.factors = buildFactors({ fred, goldHistory, goldNews: snapshot.goldNews });
+
+// 過去の各営業日のスコア（EA のバックテスト用 CSV）と、75日線フィルターとの比較
+if (Object.keys(fred).length) {
+  const hist = scoreHistory({ fred, goldHistory, from: '2024-10-01' });
+  writeFileSync(new URL('../public/data/score-history.csv', import.meta.url), toCsv(hist));
+  const report = compareFilters(hist);
+  writeFileSync(new URL('../public/data/score-backtest.json', import.meta.url), JSON.stringify(report, null, 1));
+  console.log(printReport(report));
+}
 
 writeFileSync(outPath, JSON.stringify(snapshot));
 for (const s of snapshot.status) console.log(`${s.ok ? 'ok  ' : 'FAIL'} ${s.name}${s.ok ? ` (${s.count ?? '-'})` : `: ${s.error}`}`);

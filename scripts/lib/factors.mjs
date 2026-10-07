@@ -55,6 +55,7 @@ export const FRED_SERIES = [
 ];
 
 const LOOKBACK = 21; // 約1ヶ月（営業日）
+const WINDOW_YEARS = 3; // 「いつもの変動幅」を測る期間
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
 /** fredgraph.csv（"observation_date,ID" または "DATE,ID"、欠損は "." か空）を [[日付, 値], ...] に */
@@ -124,11 +125,19 @@ export function newsTone(goldNews) {
 }
 
 /** すべての要因をまとめ、−100〜+100 の総合スコアにする */
+/** 評価日より前・直近3年の行だけ（過去の再計算でも先の値を見ないように） */
+function trailing(rows, now) {
+  if (!rows) return rows;
+  const today = now.toISOString().slice(0, 10);
+  const from = new Date(now.getTime() - WINDOW_YEARS * 365.25 * 864e5).toISOString().slice(0, 10);
+  return rows.filter((r) => r[0] < today && r[0] >= from);
+}
+
 export function buildFactors({ fred, goldHistory, goldNews, now = new Date() }) {
   const items = [];
 
   for (const s of FRED_SERIES) {
-    const rows = fred[s.id];
+    const rows = trailing(fred[s.id], now);
     if (!rows?.length) {
       items.push({ key: s.key, name: s.name, weight: s.weight, why: s.why, ok: false });
       continue;
