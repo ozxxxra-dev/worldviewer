@@ -18,6 +18,8 @@
     <div class="clocks" id="clocks" aria-label="世界時計"></div>
   </header>
 
+  <section class="summary" id="summary" aria-label="金指数と警戒度" hidden></section>
+
   <div id="sample-banner" class="banner" hidden>
     ニュース・地震・災害・為替・金スポット価格は<strong>オフライン確認用のサンプル</strong>です（金価格の推移グラフは実データ）。公開後は GitHub Actions が1時間ごとに実データを取得します。
   </div>
@@ -46,19 +48,19 @@
         <div class="score" id="gold-score"></div>
       </div>
 
-      <div class="card cal-card">
+      <div class="card cal-card" id="cal-card">
         <div class="card-head"><h3>経済指標カレンダー <small>日本時間</small></h3></div>
         <div id="calendar-next"></div>
         <div class="filters" id="calendar-prefs"></div>
         <ol class="cal" id="calendar"></ol>
       </div>
 
-      <div class="card vol-card">
+      <div class="card vol-card" id="vol-card">
         <div class="card-head"><h3>値動きの荒さ</h3></div>
         <div class="vol" id="volatility"></div>
       </div>
 
-      <div class="card cot-card">
+      <div class="card cot-card" id="cot-card">
         <div class="card-head"><h3>投機筋のポジション <small>CFTC・週次</small></h3></div>
         <div class="vol" id="cot"></div>
       </div>
@@ -86,7 +88,7 @@
     </div>
   </section>
 
-  <div class="section-head world-head">
+  <div class="section-head world-head" id="world-head">
     <h2>世界情勢 <small>金は「有事の金」と呼ばれ、紛争や金融不安で買われやすい資産です</small></h2>
   </div>
 

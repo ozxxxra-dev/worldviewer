@@ -348,3 +348,38 @@ h3 { margin: 0; font-size: 15px; }
 .meter-ends { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
 .cot-chart { width: 100%; height: auto; display: block; margin-top: 6px; }
 .cot-chart .axis { fill: var(--muted); font-size: 10px; }
+
+/* ---------- 上部の帯: 金指数・警戒度・現在値 ---------- */
+.summary {
+  display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 12px 28px; align-items: start;
+  margin: 12px 16px 0; padding: 14px 16px; border-radius: 12px; border: 1px solid var(--line);
+  background: linear-gradient(120deg, var(--gold-soft), var(--card) 60%); box-shadow: var(--shadow);
+}
+@media (max-width: 760px) { .summary { grid-template-columns: minmax(0, 1fr); } }
+.sum-main, .sum-caution { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.sum-label { font-weight: 700; font-size: 14px; }
+.sum-label small { margin-left: 8px; }
+.sum-value-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.sum-value { font-size: 40px; font-weight: 800; line-height: 1.05; font-variant-numeric: tabular-nums; }
+.sum-verdict { font-size: 18px; font-weight: 700; }
+.sum-value.up, .sum-verdict.up { color: var(--up); }
+.sum-value.down, .sum-verdict.down { color: var(--down); }
+.sum-value-row .spark { grid-area: auto; width: 90px; height: 28px; margin-left: auto; }
+.sum-parts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.sum-part { display: inline-flex; gap: 6px; align-items: baseline; border: 1px solid var(--line); background: var(--card); color: var(--ink); border-radius: 999px; padding: 3px 10px; font: inherit; font-size: 12px; cursor: pointer; }
+.sum-part:hover { border-color: var(--accent); }
+.sum-part.na { color: var(--muted); }
+.sum-part-name { color: var(--muted); }
+.sum-part-val { font-weight: 700; font-variant-numeric: tabular-nums; }
+.sum-part-val.up { color: var(--up); }
+.sum-part-val.down { color: var(--down); }
+.caution-meter { background: linear-gradient(90deg, var(--line), var(--orange)); }
+.sum-next { font-size: 12px; color: var(--muted); }
+.sum-next b { color: var(--ink); }
+.sum-ticker { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px 20px; padding-top: 10px; border-top: 1px solid var(--line); font-variant-numeric: tabular-nums; font-size: 13px; }
+.tick { display: inline-flex; gap: 6px; align-items: baseline; white-space: nowrap; }
+.tick-name { color: var(--muted); font-size: 12px; }
+.tick-chg { font-size: 12px; }
+.tick-chg.up { color: var(--up); }
+.tick-chg.down { color: var(--down); }
+.sum-note { grid-column: 1 / -1; margin: 0; }

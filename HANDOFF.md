@@ -15,6 +15,7 @@
 | セクション | 内容 | 主なコード |
 | --- | --- | --- |
 | 金相場 | 現在値（円/g・ドル/oz・ユーロ/oz）、期間別騰落率、価格推移チャート、円建て価格の変動要因（金価格と為替に分解）、銀・金銀比価・ドル円、9通貨建て価格 | `public/js/gold.js` |
+| 金指数・警戒度（ページ上部） | 要因スコア・CFTC 逆張り・地政学ニュースの多さを加重平均（−100〜+100）。警戒度は GVZ・米重要指標までの時間・地政学ニュース。地政学の比較用に件数の履歴を `snapshot.goldIndex.history` として前回公開分から引き継ぐ（24件たまるまで地政学は計算外） | `scripts/lib/goldindex.mjs`, `public/js/summary.js` |
 | 金相場の方向感（要因スコア） | 下の §3 | `scripts/lib/factors.mjs`, `public/js/gold.js` の `renderScore` |
 | 金関連ニュース | Google ニュース検索 RSS（日英）＋一般ニュースから金・金利関連をキーワード抽出 | `scripts/lib/snapshot.mjs` |
 | 世界情勢 | 世界地図（国別ニュース件数・地震・災害警報）、ニュース一覧（7社 RSS）、地震（USGS）、災害警報（GDACS）、為替 | `public/js/app.js` |

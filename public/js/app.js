@@ -2,6 +2,7 @@
 import { $, h, ago, fmtDate, cssVar } from './util.js';
 import { initGold, updateGold } from './gold.js';
 import { renderMarkets } from './markets.js';
+import { renderSummary } from './summary.js';
 import { newsItem, applyPrefs, prefControls, relLegend, initBrowserTranslate, queueBrowserTranslation } from './news.js';
 
 const REFRESH_MS = 15 * 60 * 1000;
@@ -402,6 +403,7 @@ async function main() {
   state.snap = snap;
   state.countries = countries;
   initGold(gold, snap);
+  renderSummary(snap, gold);
 
   initMap(world);
   $('q').addEventListener('input', (e) => {
@@ -420,7 +422,9 @@ async function main() {
       if (next.generatedAt !== state.snap.generatedAt) {
         state.snap = next;
         renderAll();
-        updateGold(await loadGoldHistory(), next);
+        const gold = await loadGoldHistory();
+        updateGold(gold, next);
+        renderSummary(next, gold);
       } else {
         renderMeta();
       }

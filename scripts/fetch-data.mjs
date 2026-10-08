@@ -12,6 +12,7 @@ import { enrichNews, prevMap } from './lib/enrich.mjs';
 import { FRED_SERIES, parseFredCsv, buildFactors } from './lib/factors.mjs';
 import { CALENDAR_URLS, parseCalendar } from './lib/calendar.mjs';
 import { COT_URL, parseCot } from './lib/cot.mjs';
+import { buildGoldIndex } from './lib/goldindex.mjs';
 import { GVZ_ID, gvzSummary, realizedVol, volLabel } from './lib/volatility.mjs';
 import { scoreHistory, compareFilters, toCsv, latestScoreCsv, printReport } from './lib/backtest.mjs';
 
@@ -55,8 +56,9 @@ async function loadPrev() {
   }
 }
 
+const prevSnapshot = await loadPrev();
 snapshot.enrichment = await enrichNews([...snapshot.news, ...snapshot.goldNews], {
-  prev: prevMap(await loadPrev()),
+  prev: prevMap(prevSnapshot),
   ms: !fixtureDir && process.env.AZURE_TRANSLATOR_KEY ? { key: process.env.AZURE_TRANSLATOR_KEY, region: process.env.AZURE_TRANSLATOR_REGION } : null,
 });
 
@@ -125,6 +127,17 @@ snapshot.factors = buildFactors({ fred, goldHistory, goldNews: snapshot.goldNews
     realized: realized && { ...realized, level: volLabel(realized.percentile) },
   };
 }
+// サイト全体をまとめた金指数と警戒度（地政学ニュースの件数は前回分の履歴に追記していく）
+snapshot.goldIndex = buildGoldIndex({
+  factors: snapshot.factors,
+  cot: snapshot.cot,
+  volatility: snapshot.volatility,
+  calendar: snapshot.calendar,
+  news: snapshot.news,
+  prevHistory: prevSnapshot?.goldIndex?.history ?? [],
+  now: fixtureDir ? new Date(process.env.SNAPSHOT_NOW ?? '2026-10-06T12:00:00Z') : new Date(),
+});
+
 // EA が読む最新スコア（GitHub Pages でも公開され、Windows VPS では MT4 の共通フォルダにコピーされる）
 writeFileSync(new URL('../public/data/gold-score.csv', import.meta.url), latestScoreCsv(snapshot.factors));
 
@@ -141,6 +154,8 @@ writeFileSync(outPath, JSON.stringify(snapshot));
 for (const s of snapshot.status) console.log(`${s.ok ? 'ok  ' : 'FAIL'} ${s.name}${s.ok ? ` (${s.count ?? '-'})` : `: ${s.error}`}`);
 console.log(`news=${snapshot.news.length} quakes=${snapshot.quakes.length} disasters=${snapshot.disasters.length}`);
 console.log(`calendar=${snapshot.calendar.length} cot=${snapshot.cot ? `${snapshot.cot.date} net=${snapshot.cot.net} pct=${snapshot.cot.percentile}` : 'n/a'} gvz=${snapshot.volatility.gvz?.value ?? 'n/a'} rv=${snapshot.volatility.realized?.value ?? 'n/a'}`);
+const gi = snapshot.goldIndex;
+console.log(`goldIndex: value=${gi.value} verdict=${gi.verdict} caution=${gi.caution.value} geo=${gi.geo.count}(pct=${gi.geo.percentile ?? '-'}, n=${gi.geo.samples})`);
 const f = snapshot.factors;
 console.log(`factors: total=${f.total} macro=${f.macro} verdict=${f.verdict} ` + f.items.map((i) => `${i.key}:${i.ok ? i.point : 'n/a'}`).join(' '));
 const en = snapshot.enrichment;
